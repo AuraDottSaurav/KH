@@ -9,7 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Loader2, Mic, Paperclip, Send, ArrowUp, Sparkles, Bot, Copy, Volume2 } from 'lucide-react';
+import { Loader2, Mic, Paperclip, Send, ArrowUp, Sparkles, Bot, Copy, Volume2, Square } from 'lucide-react';
 import { AIElement } from '@/components/ui/ai-element';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +32,7 @@ export default function ChatInterface({
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null); // TTS audio reference for stop functionality
     const router = useRouter();
 
     // Chat persistence state
@@ -145,9 +146,33 @@ export default function ChatInterface({
         // Let's us the form ref approach or just button type='submit' inside the form.
     };
 
-    // Play audio using OpenAI TTS
+    // Cleanup TTS audio on unmount (navigation)
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
+
+    // Play/Stop audio using OpenAI TTS
     const handlePlayAudio = async (text: string, messageId: string) => {
-        if (playingMessageId) return; // Prevent multiple streams for now
+        // If clicking on currently playing message, stop it
+        if (playingMessageId === messageId && audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+            setPlayingMessageId(null);
+            return;
+        }
+
+        // Stop any existing audio first
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+            setPlayingMessageId(null);
+        }
+
         try {
             setPlayingMessageId(messageId);
             const res = await fetch('/api/speak', {
@@ -161,9 +186,17 @@ export default function ChatInterface({
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const audio = new Audio(url);
+            audioRef.current = audio; // Store reference for stopping
 
             audio.onended = () => {
                 setPlayingMessageId(null);
+                audioRef.current = null;
+                URL.revokeObjectURL(url);
+            };
+
+            audio.onerror = () => {
+                setPlayingMessageId(null);
+                audioRef.current = null;
                 URL.revokeObjectURL(url);
             };
 
@@ -171,6 +204,7 @@ export default function ChatInterface({
         } catch (error) {
             console.error('TTS Error:', error);
             setPlayingMessageId(null);
+            audioRef.current = null;
             toast({ title: "Error", description: "Failed to play audio.", variant: "destructive" });
         }
     };
@@ -329,12 +363,15 @@ export default function ChatInterface({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-6 w-6 text-zinc-500 hover:text-zinc-300"
+                                                            className={cn(
+                                                                "h-6 w-6 text-zinc-500 hover:text-zinc-300",
+                                                                playingMessageId === message.id && "text-indigo-400 hover:text-indigo-300"
+                                                            )}
                                                             onClick={() => handlePlayAudio(message.content, message.id)}
-                                                            disabled={playingMessageId !== null}
+                                                            title={playingMessageId === message.id ? "Stop audio" : "Play audio"}
                                                         >
                                                             {playingMessageId === message.id ? (
-                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                                                                <Square className="w-3.5 h-3.5 fill-current" />
                                                             ) : (
                                                                 <Volume2 className="w-3.5 h-3.5" />
                                                             )}
