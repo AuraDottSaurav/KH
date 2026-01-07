@@ -10,6 +10,8 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
+import ParticlesBackground from '@/components/ui/particle-background';
+
 export default function AdminPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -119,9 +121,13 @@ export default function AdminPage() {
             {/* Main Content */}
             <main className="flex-1 flex flex-col relative overflow-hidden bg-black">
                 {/* Background effects */}
+                {/* Background effects */}
                 <div className="absolute inset-0 pointer-events-none z-0">
                     <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[100px]" />
                     <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] bg-purple-500/5 rounded-full blur-[80px]" />
+                    {/* Grid Pattern */}
+                    <div className="absolute h-full w-full bg-[radial-gradient(#3f3f46_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
+                    <ParticlesBackground />
                 </div>
 
                 {/* Header */}

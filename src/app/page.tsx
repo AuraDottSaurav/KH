@@ -52,13 +52,13 @@ export default function Home() {
                 <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
                     <Tabs defaultValue="actions" className="w-auto">
                         <TabsList className="grid w-full grid-cols-2 h-12 bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-md rounded-full px-2 gap-2">
-                            <TabsTrigger value="admin" className="rounded-full data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 text-zinc-400 transition-all font-medium tracking-wide text-xs" asChild>
+                            <TabsTrigger value="admin" className="rounded-full data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200 transition-all font-medium tracking-wide text-xs" asChild>
                                 <Link href="/admin" className="flex items-center gap-2 px-6">
                                     <ShieldCheck className="w-4 h-4" />
                                     ADMIN HUB
                                 </Link>
                             </TabsTrigger>
-                            <TabsTrigger value="query" className="rounded-full data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 text-zinc-400 transition-all font-medium tracking-wide text-xs" asChild>
+                            <TabsTrigger value="query" className="rounded-full data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200 transition-all font-medium tracking-wide text-xs" asChild>
                                 <Link href="/projects" className="flex items-center gap-2 px-6">
                                     <Database className="w-4 h-4" />
                                     QUERY KNOWLEDGE
