@@ -132,7 +132,7 @@ export default function ChatPage() {
                 </header>
 
                 {/* Chat Interface */}
-                <div className="flex-1 relative z-10 w-full">
+                <div className="flex-1 relative z-10 w-full h-full overflow-hidden">
                     {isChatLoading ? (
                         <div className="h-full w-full flex items-center justify-center">
                             <Loader2 className="w-8 h-8 text-zinc-600 animate-spin" />

@@ -388,8 +388,8 @@ export default function ChatInterface({
                 </ScrollArea>
             </div>
 
-            {/* Input Area (CommandCenter Copy) */}
-            <div className="absolute bottom-12 left-0 right-0 px-8 z-20">
+            {/* Input Area with Background */}
+            <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black to-transparent pt-8 pb-6 px-8">
                 <div className="w-full max-w-2xl mx-auto">
                     {/* Processing Overlay */}
                     <AnimatePresence>
@@ -479,7 +479,7 @@ export default function ChatInterface({
                         </div>
                     </form>
 
-                    {/* Helper Hints (Exact from CommandCenter) */}
+                    {/* Helper Hints */}
                     <div className="mt-4 flex items-center justify-center gap-6 text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
                         <span className="flex items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity">
                             <span className="w-4 h-4 rounded border border-zinc-700 flex items-center justify-center bg-zinc-900">↵</span>

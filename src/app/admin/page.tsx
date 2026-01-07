@@ -175,8 +175,8 @@ export default function AdminPage() {
                                 <RecentUploads items={knowledgeItems} />
                             </div>
 
-                            {/* Command Center - Fixed at bottom */}
-                            <div className="absolute bottom-12 left-0 right-0 px-8">
+                            {/* Command Center - Fixed at bottom with background */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black to-transparent pt-8 pb-6 px-8">
                                 <CommandCenter
                                     projectId={activeProject.id}
                                     onKnowledgeAdded={handleKnowledgeAdded}
