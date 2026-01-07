@@ -104,7 +104,7 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                     <div
                                         className={`max-w-[80%] ${message.role === 'user'
                                             ? 'gradient-primary text-white rounded-2xl rounded-br-md px-4 py-3'
-                                            : 'glass rounded-2xl rounded-tl-md px-4 py-3'
+                                            : ''
                                             }`}
                                     >
                                         {message.role === 'user' ? (
@@ -116,7 +116,6 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                                 <ReactMarkdown
                                                     remarkPlugins={[remarkGfm]}
                                                     components={{
-                                                        // Headers
                                                         h1: ({ children }) => (
                                                             <h1 className="text-xl font-bold mt-4 mb-2 text-white first:mt-0">{children}</h1>
                                                         ),
@@ -126,11 +125,9 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                                         h3: ({ children }) => (
                                                             <h3 className="text-base font-semibold mt-3 mb-1.5 text-white first:mt-0">{children}</h3>
                                                         ),
-                                                        // Paragraphs
                                                         p: ({ children }) => (
                                                             <p className="mb-3 last:mb-0 leading-relaxed text-slate-200">{children}</p>
                                                         ),
-                                                        // Lists
                                                         ul: ({ children }) => (
                                                             <ul className="list-disc list-inside mb-3 space-y-1.5 text-slate-200">{children}</ul>
                                                         ),
@@ -140,7 +137,6 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                                         li: ({ children }) => (
                                                             <li className="leading-relaxed">{children}</li>
                                                         ),
-                                                        // Code
                                                         code: ({ className, children }) => {
                                                             const isInline = !className;
                                                             return isInline ? (
@@ -158,30 +154,25 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                                                 {children}
                                                             </pre>
                                                         ),
-                                                        // Blockquotes
                                                         blockquote: ({ children }) => (
                                                             <blockquote className="border-l-4 border-purple-500 pl-4 py-1 my-3 italic text-slate-300 bg-purple-500/10 rounded-r-lg">
                                                                 {children}
                                                             </blockquote>
                                                         ),
-                                                        // Links
                                                         a: ({ href, children }) => (
                                                             <a href={href} className="text-purple-400 hover:text-purple-300 underline underline-offset-2" target="_blank" rel="noopener noreferrer">
                                                                 {children}
                                                             </a>
                                                         ),
-                                                        // Strong and emphasis
                                                         strong: ({ children }) => (
                                                             <strong className="font-semibold text-white">{children}</strong>
                                                         ),
                                                         em: ({ children }) => (
                                                             <em className="italic text-slate-300">{children}</em>
                                                         ),
-                                                        // Horizontal rule
                                                         hr: () => (
                                                             <hr className="my-4 border-slate-600/50" />
                                                         ),
-                                                        // Tables
                                                         table: ({ children }) => (
                                                             <div className="overflow-x-auto my-3">
                                                                 <table className="min-w-full border border-slate-600/50 rounded-lg overflow-hidden">{children}</table>
@@ -204,7 +195,7 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                         )}
 
                                         {/* TTS Button for assistant messages */}
-                                        {message.role === 'assistant' && message.content && (
+                                        {message.role === 'assistant' && message.content && !isLoading && (
                                             <div className="mt-3 pt-3 border-t border-slate-600/30">
                                                 <AudioPlayback text={message.content} />
                                             </div>
