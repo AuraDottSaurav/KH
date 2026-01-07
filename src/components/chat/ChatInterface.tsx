@@ -2,24 +2,40 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useChat } from 'ai/react';
+import { Message } from 'ai';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Loader2, Mic, Paperclip, Send, ArrowUp, Sparkles, Bot, Copy, Volume2 } from 'lucide-react';
+import { AIElement } from '@/components/ui/ai-element';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 interface ChatInterfaceProps {
     projectId: string;
     projectName: string;
+    initialChatId?: string | null;
+    initialMessages?: Message[];
+    onChatCreated?: (chatId: string) => void;
 }
 
-export default function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
+export default function ChatInterface({
+    projectId,
+    projectName,
+    initialChatId,
+    initialMessages = [],
+    onChatCreated
+}: ChatInterfaceProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
+
+    // Chat persistence state
+    const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId || null);
 
     // Voice/File state (mimicking CommandCenter)
     const [isRecording, setIsRecording] = useState(false);
@@ -30,10 +46,39 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
     const { toast } = useToast();
 
     // Vercel AI SDK
-    const { messages, input, setInput, handleSubmit, isLoading, append } = useChat({
+    const { messages, input, setInput, handleSubmit, isLoading, append, data, setMessages } = useChat({
         api: '/api/chat',
-        body: { projectId },
+        body: { projectId, chatId: currentChatId },
+        initialMessages,
     });
+
+    // Sync state with props (Handle Navigation)
+    useEffect(() => {
+        if (initialChatId && initialChatId !== currentChatId) {
+            setCurrentChatId(initialChatId);
+            setMessages(initialMessages);
+        } else if (initialChatId === null && currentChatId) {
+            setCurrentChatId(null);
+            setMessages([]);
+        }
+    }, [initialChatId, initialMessages, setMessages]);
+
+    // Watch for chat creation
+    useEffect(() => {
+        if (!currentChatId && data) {
+            // Find chat_id in data
+            const chatData = data.find((item: any) => item?.type === 'chat_id') as any;
+            if (chatData && chatData.value) {
+                const newId = chatData.value;
+                setCurrentChatId(newId);
+                // Update URL silently
+                window.history.replaceState(null, '', `/chat/${projectId}?chatId=${newId}`);
+                // Notify parent to refresh sidebar
+                if (onChatCreated) onChatCreated(newId);
+            }
+        }
+    }, [data, currentChatId, projectId, onChatCreated]);
+
 
     // Effective loading state (AI thinking OR internal file processing)
     const isBusy = isLoading || isInternalProcessing;
@@ -333,14 +378,7 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
                                             <Bot className="w-5 h-5 text-indigo-400" />
                                         </div>
-                                        <div className="flex items-center gap-3 mt-2.5">
-                                            <div className="flex gap-1">
-                                                <span className="w-1.5 h-1.5 bg-indigo-500/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                                                <span className="w-1.5 h-1.5 bg-indigo-500/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                                                <span className="w-1.5 h-1.5 bg-indigo-500/60 rounded-full animate-bounce" />
-                                            </div>
-                                            <span className="text-xs font-medium text-indigo-400/80 animate-pulse">Searching Knowledge Base...</span>
-                                        </div>
+                                        <AIElement className="mt-2.5" text="Searching Knowledge Base..." />
                                     </motion.div>
                                 )}
                                 <div ref={messagesEndRef} className="h-4" />

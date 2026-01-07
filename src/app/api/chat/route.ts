@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { openai } from '@ai-sdk/openai';
-import { streamText, embed } from 'ai';
+import { streamText, embed, StreamData } from 'ai';
 
 export const maxDuration = 60;
 
@@ -112,7 +112,7 @@ function extractDistinctTopics(documents: { id: string; content: string }[]): { 
 // POST /api/chat - RAG-powered chat endpoint with exhaustive search
 export async function POST(request: NextRequest) {
     try {
-        const { messages, projectId } = await request.json();
+        const { messages, projectId, chatId } = await request.json();
 
         if (!projectId) {
             return new Response(
@@ -146,6 +146,44 @@ export async function POST(request: NextRequest) {
         const userQuery = lastUserMessage.content;
         console.log(`[Knowledge Search] User query: "${userQuery}"`);
         console.log(`[Knowledge Search] Project ID: ${projectId}`);
+
+        // --- Persistence Logic ---
+        let activeChatId = chatId;
+        let isNewChat = false;
+
+        if (!activeChatId) {
+            // Create new chat -- wrapping in try catch to effectively ignore errors if table missing
+            try {
+                isNewChat = true;
+                const title = userQuery.slice(0, 50) + (userQuery.length > 50 ? '...' : '');
+
+                const { data: newChat, error: createError } = await supabase
+                    .from('chats')
+                    .insert({ project_id: projectId, title })
+                    .select()
+                    .single();
+
+                if (newChat) {
+                    activeChatId = newChat.id;
+                } else if (createError) {
+                    console.warn('Error creating chat (persistence disabled or table missing):', createError.message);
+                }
+            } catch (e) {
+                console.warn('Persistence error:', e);
+            }
+        }
+
+        if (activeChatId) {
+            // Save User Message
+            try {
+                await supabase.from('messages').insert({
+                    chat_id: activeChatId,
+                    role: 'user',
+                    content: userQuery
+                });
+            } catch (e) { }
+        }
+        // -------------------------
 
         // Step 1: Generate embedding for the query
         const { embedding: queryEmbedding } = await embed({
@@ -256,13 +294,33 @@ Respond naturally, like: "I found a few topics that might match what you're look
 
 Which one would you like to know more about? Just say the number or topic name!"`;
 
+            const disData = new StreamData();
+            if (!chatId && activeChatId) {
+                disData.append({ type: 'chat_id', value: activeChatId });
+            }
+
             const result = streamText({
                 model: openai('gpt-4o'),
                 system: 'You are a helpful knowledge assistant. Format the disambiguation options clearly and invite the user to choose one.',
                 messages: [{ role: 'user', content: disambiguationPrompt }],
+                onFinish: async ({ text }) => {
+                    if (activeChatId) {
+                        try {
+                            console.log(`[Persistence] Saving disambiguation message for chat ${activeChatId}`);
+                            await supabase.from('messages').insert({
+                                chat_id: activeChatId,
+                                role: 'assistant',
+                                content: text
+                            });
+                        } catch (e) {
+                            console.error('[Persistence] Disambiguation save error:', e);
+                        }
+                    }
+                    disData.close();
+                },
             });
 
-            return result.toDataStreamResponse();
+            return result.toDataStreamResponse({ data: disData });
         }
 
 
@@ -314,14 +372,37 @@ You are NOT allowed to:
 
 Simply inform the user that no knowledge has been added yet and they should contact their administrator.`;
 
+        const data = new StreamData();
+        if (!chatId && activeChatId) {
+            data.append({ type: 'chat_id', value: activeChatId });
+        }
+
         // Stream the response using GPT-4o
         const result = streamText({
             model: openai('gpt-4o'),
             system: systemPrompt,
             messages,
+            onFinish: async ({ text }) => {
+                if (activeChatId) {
+                    try {
+                        console.log(`[Persistence] Saving assistant message for chat ${activeChatId}`);
+                        const { error } = await supabase.from('messages').insert({
+                            chat_id: activeChatId,
+                            role: 'assistant',
+                            content: text
+                        });
+                        if (error) console.error('[Persistence] Error saving:', error);
+                    } catch (e) {
+                        console.error('[Persistence] Exception:', e);
+                    }
+                } else {
+                    console.warn('[Persistence] No activeChatId in onFinish');
+                }
+                data.close();
+            },
         });
 
-        return result.toDataStreamResponse();
+        return result.toDataStreamResponse({ data });
     } catch (error) {
         console.error('Error in chat:', error);
         return new Response(

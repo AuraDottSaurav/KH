@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,18 +12,49 @@ interface ChatSidebarProps {
     projectId: string;
     projectName: string;
     className?: string; // Add className prop to satisfy usage in page.tsx
+    refreshTrigger?: number;
 }
 
-// Dummy history data (replace with real data later)
-const MOCK_HISTORY = [
-    { id: '1', title: 'Latency buffers inquiry', date: '12m ago' },
-    { id: '2', title: 'Synthesis of Alpha core', date: '1h ago' },
-    { id: '3', title: 'Decentralized node logic', date: 'Yesterday' },
-];
+// Helper for relative time
+function getRelativeTime(dateString: string) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = (now.getTime() - date.getTime()) / 1000;
 
-export default function ChatSidebar({ projectId, projectName, className }: ChatSidebarProps) {
-    const [isLoading, setIsLoading] = useState(false);
+    if (diff < 60) return 'Just now';
+    const minutes = Math.floor(diff / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+}
+
+interface Chat {
+    id: string;
+    title: string;
+    created_at: string;
+}
+
+export default function ChatSidebar({ projectId, projectName, className, refreshTrigger = 0 }: ChatSidebarProps) {
+    const [isLoading, setIsLoading] = useState(true); // Start loading true
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [chats, setChats] = useState<Chat[]>([]);
+
+    useEffect(() => {
+        if (projectId) {
+            setIsLoading(true);
+            fetch(`/api/chats?projectId=${projectId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.chats) setChats(data.chats);
+                })
+                .catch(err => console.error('Failed to load chats', err))
+                .finally(() => setIsLoading(false));
+        }
+    }, [projectId, refreshTrigger]);
 
     return (
         <aside
@@ -49,16 +80,18 @@ export default function ChatSidebar({ projectId, projectName, className }: ChatS
 
             {/* New Inquiry Button */}
             <div className={cn("px-6 pb-6", isCollapsed ? "px-4" : "")}>
-                <Button
-                    variant="ghost"
-                    className={cn(
-                        "w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 rounded-xl transition-all group",
-                        isCollapsed ? "h-12 w-12 p-0 justify-center" : "h-12 text-xs font-semibold tracking-wider justify-center gap-1"
-                    )}
-                >
-                    <Plus className={cn("w-4 h-4 transition-transform duration-300", isCollapsed ? "" : "group-hover:rotate-90")} />
-                    {!isCollapsed && "NEW INQUIRY"}
-                </Button>
+                <Link href={`/chat/${projectId}`}>
+                    <Button
+                        variant="ghost"
+                        className={cn(
+                            "w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 rounded-xl transition-all group",
+                            isCollapsed ? "h-12 w-12 p-0 justify-center" : "h-12 text-xs font-semibold tracking-wider justify-center gap-1"
+                        )}
+                    >
+                        <Plus className={cn("w-4 h-4 transition-transform duration-300", isCollapsed ? "" : "group-hover:rotate-90")} />
+                        {!isCollapsed && "NEW INQUIRY"}
+                    </Button>
+                </Link>
             </div>
 
             {/* History List */}
@@ -80,11 +113,12 @@ export default function ChatSidebar({ projectId, projectName, className }: ChatS
                         </div>
                     ) : (
                         <div className="space-y-1">
-                            {MOCK_HISTORY.map((item) => (
-                                <button
+                            {chats.map((item) => (
+                                <Link
                                     key={item.id}
+                                    href={`/chat/${projectId}?chatId=${item.id}`}
                                     className={cn(
-                                        "w-full group flex flex-col gap-1 p-3 rounded-xl transition-all duration-200 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-800/50",
+                                        "w-full group flex flex-col gap-1 p-3 rounded-xl transition-all duration-200 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-800/50 block",
                                         isCollapsed ? "items-center justify-center py-4" : "text-left"
                                     )}
                                 >
@@ -96,12 +130,15 @@ export default function ChatSidebar({ projectId, projectName, className }: ChatS
                                                 {item.title}
                                             </span>
                                             <span className="text-[10px] text-zinc-500">
-                                                {item.date}
+                                                {getRelativeTime(item.created_at)}
                                             </span>
                                         </>
                                     )}
-                                </button>
+                                </Link>
                             ))}
+                            {chats.length === 0 && !isCollapsed && (
+                                <div className="text-center text-zinc-600 text-xs py-4">No history yet</div>
+                            )}
                         </div>
                     )}
                 </ScrollArea>

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import ChatInterface from '@/components/chat/ChatInterface';
 import ChatSidebar from '@/components/chat/ChatSidebar';
 import { Project } from '@/lib/supabase';
-import { ArrowLeft, Box, Cpu, Grid, Globe, Database, Shield } from 'lucide-react';
+import { ArrowLeft, Box, Cpu, Grid, Globe, Database, Shield, Loader2 } from 'lucide-react';
 import ParticlesBackground from '@/components/ui/particle-background';
 
 // Helper to get consistent icon
@@ -21,12 +21,47 @@ const getProjectIcon = (name: string, index: number = 0) => {
 export default function ChatPage() {
     const params = useParams();
     const projectId = params.projectId as string;
+    const searchParams = useSearchParams();
+    const chatId = searchParams.get('chatId');
+
     const [project, setProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isChatLoading, setIsChatLoading] = useState(!!chatId);
+    const [initialMessages, setInitialMessages] = useState([]);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const justCreatedIdRef = useRef<string | null>(null);
 
     useEffect(() => {
         fetchProject();
     }, [projectId]);
+
+    useEffect(() => {
+        if (chatId) {
+            // If we just created this chat, skip loading as local state is fresh
+            if (chatId === justCreatedIdRef.current) {
+                justCreatedIdRef.current = null;
+                return;
+            }
+
+            setIsChatLoading(true);
+            setInitialMessages([]);
+            fetch(`/api/chats/${chatId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.messages) setInitialMessages(data.messages);
+                })
+                .catch(err => console.error('Error fetching messages:', err))
+                .finally(() => setIsChatLoading(false));
+        } else {
+            setInitialMessages([]);
+            setIsChatLoading(false);
+        }
+    }, [chatId]);
+
+    const handleChatCreated = (newId: string) => {
+        justCreatedIdRef.current = newId;
+        setRefreshKey(prev => prev + 1);
+    };
 
     const fetchProject = async () => {
         try {
@@ -63,7 +98,7 @@ export default function ChatPage() {
     return (
         <div className="flex h-screen bg-black overflow-hidden selection:bg-indigo-500/30">
             {/* Chat Sidebar */}
-            <ChatSidebar projectId={projectId} projectName={project.name} />
+            <ChatSidebar projectId={projectId} projectName={project.name} refreshTrigger={refreshKey} />
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col relative h-full w-full overflow-hidden">
@@ -76,7 +111,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Header */}
-                <header className="relative z-20 px-8 py-8 border-b border-white/5 bg-black/50 backdrop-blur-sm flex items-center gap-4">
+                <header className="relative z-20 px-8 py-4 border-b border-white/5 bg-black/50 backdrop-blur-sm flex items-center gap-4">
                     <Link
                         href="/projects"
                         className="p-2 -ml-2 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all group"
@@ -86,7 +121,7 @@ export default function ChatPage() {
 
                     <div className="flex items-center">
                         <div>
-                            <h1 className="text-2xl font-bold text-white tracking-tight">
+                            <h1 className="text-xl font-bold text-white tracking-tight">
                                 {project.name.replace(/Vault/i, '').trim()}
                             </h1>
                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
@@ -98,7 +133,20 @@ export default function ChatPage() {
 
                 {/* Chat Interface */}
                 <div className="flex-1 relative z-10 w-full">
-                    <ChatInterface projectId={projectId} projectName={project.name} />
+                    {isChatLoading ? (
+                        <div className="h-full w-full flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-zinc-600 animate-spin" />
+                        </div>
+                    ) : (
+                        <ChatInterface
+                            key={projectId}
+                            projectId={projectId}
+                            projectName={project.name}
+                            initialChatId={chatId}
+                            initialMessages={initialMessages}
+                            onChatCreated={handleChatCreated}
+                        />
+                    )}
                 </div>
             </main>
         </div>
