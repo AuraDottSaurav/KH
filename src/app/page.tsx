@@ -1,97 +1,93 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Mic, FileUp, Search, ShieldCheck, Database } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ParticlesBackground from "@/components/ui/particle-background";
 
 export default function Home() {
     return (
-        <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-            {/* Hero Section */}
-            <div className="relative z-10 text-center max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                <Badge variant="outline" className="mb-4">
-                    v0.1.0 • Knowledge Hub
-                </Badge>
+        <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-zinc-950 text-foreground selection:bg-purple-500/30">
 
-                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight lg:text-7xl">
-                    Knowledge Transfer <br />
-                    <span className="text-primary">Reimagined</span>
-                </h1>
+            {/* Background Layers */}
+            <div className="absolute inset-0 z-0">
+                {/* Subtle base gradient */}
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-zinc-950 to-zinc-950 pointer-events-none" />
 
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                    AI-powered platform to dump text, voice, and files — then query your knowledge base with natural language.
+                {/* Grid Pattern */}
+                <div className="absolute h-full w-full bg-[radial-gradient(#3f3f46_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
+
+                {/* God Ray Light Effect */}
+                <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent blur-[80px] rounded-full rotate-45 pointer-events-none" />
+
+                {/* Mouse interaction particles */}
+                <ParticlesBackground />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center max-w-5xl mx-auto w-full h-full justify-center min-h-[80vh]">
+
+                {/* Neural Repository Badge */}
+                <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <span className="px-4 py-1.5 rounded-full border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm text-[10px] md:text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase shadow-sm">
+                        Neural Repository
+                    </span>
+                </div>
+
+                {/* Main Heading */}
+                <div className="text-center space-y-2 mb-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-100">
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl tracking-tight font-extralight text-zinc-300">
+                        Knowledge Transfer
+                    </h1>
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl tracking-tight font-bold text-indigo-500 drop-shadow-2xl italic">
+                        Reimagined
+                    </h1>
+                </div>
+
+                {/* Subtitle */}
+                <p className="max-w-xl mx-auto text-center text-[10px] md:text-xs font-medium tracking-[0.15em] text-zinc-500 uppercase leading-relaxed mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                    A permanent home for shared wisdom. Capture what you know,
+                    <br className="hidden md:block" />
+                    find what you need, and learn at your own pace.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                    <Button asChild size="lg" className="h-12 px-8 text-lg">
-                        <Link href="/admin">
-                            <span className="flex items-center gap-2">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                Admin Hub
-                            </span>
-                        </Link>
-                    </Button>
+                {/* Action Tabs */}
+                <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                    <Tabs defaultValue="actions" className="w-auto">
+                        <TabsList className="grid w-full grid-cols-2 h-12 bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-md rounded-full px-2 gap-2">
+                            <TabsTrigger value="admin" className="rounded-full data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 text-zinc-400 transition-all font-medium tracking-wide text-xs" asChild>
+                                <Link href="/admin" className="flex items-center gap-2 px-6">
+                                    <ShieldCheck className="w-4 h-4" />
+                                    ADMIN HUB
+                                </Link>
+                            </TabsTrigger>
+                            <TabsTrigger value="query" className="rounded-full data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 text-zinc-400 transition-all font-medium tracking-wide text-xs" asChild>
+                                <Link href="/projects" className="flex items-center gap-2 px-6">
+                                    <Database className="w-4 h-4" />
+                                    QUERY KNOWLEDGE
+                                </Link>
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
 
-                    <Button asChild variant="outline" size="lg" className="h-12 px-8 text-lg">
-                        <Link href="/projects">
-                            <span className="flex items-center gap-2">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                </svg>
-                                Query Knowledge
-                            </span>
-                        </Link>
-                    </Button>
+            </div>
+
+            {/* Footer Features (Borderless Tabs) */}
+            <div className="absolute bottom-8 left-0 w-full z-20 animate-in fade-in duration-1000 delay-500">
+                <div className="max-w-4xl mx-auto px-6 grid grid-cols-3 gap-4 md:gap-8">
+                    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900/20 backdrop-blur-sm text-center">
+                        <Mic className="w-5 h-5 text-indigo-500 mb-2" />
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Voice Input</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900/20 backdrop-blur-sm text-center">
+                        <FileUp className="w-5 h-5 text-indigo-500 mb-2" />
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">File Upload</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900/20 backdrop-blur-sm text-center">
+                        <Search className="w-5 h-5 text-indigo-500 mb-2" />
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Semantic Search</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-                <FeatureCard
-                    icon={
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                        </svg>
-                    }
-                    title="Voice Input"
-                    description="Record knowledge or ask questions with your voice. Powered by OpenAI Whisper."
-                />
-                <FeatureCard
-                    icon={
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    }
-                    title="File Upload"
-                    description="Upload PDFs, documents, and audio files. Auto-extracted and indexed."
-                />
-                <FeatureCard
-                    icon={
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    }
-                    title="Semantic Search"
-                    description="AI-powered RAG retrieval finds the most relevant knowledge for your queries."
-                />
-            </div>
         </main>
-    );
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-    return (
-        <Card className="border-border/50 hover:bg-accent/50 transition-colors">
-            <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-2">
-                    {icon}
-                </div>
-                <CardTitle className="text-xl">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground leading-relaxed">{description}</p>
-            </CardContent>
-        </Card>
     );
 }

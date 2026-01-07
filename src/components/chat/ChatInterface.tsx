@@ -21,7 +21,11 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [isVoiceMode, setIsVoiceMode] = useState(false);
+
+    // We can remove the explicit "isVoiceMode" state if we integrate the button directly.
+    // Or keep it if we want to toggle the input capability.
+    // For ChatGPT style, voice is usually an alternative input method available alongside text.
+    // I'll keep the input area text-based and add the mic button.
 
     const { messages, input, setInput, handleSubmit, isLoading, append } = useChat({
         api: '/api/chat',
@@ -48,188 +52,220 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
         handleSubmit(e);
     };
 
-    return (
-        <div className="flex flex-col h-[calc(100vh-1rem)] md:h-[calc(100vh-2rem)] max-w-5xl mx-auto w-full">
-            {/* Messages Area */}
-            <ScrollArea className="flex-1 px-4 py-4">
-                <div className="space-y-6 pb-4">
-                    {messages.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-20 flex flex-col items-center"
-                        >
-                            <div className="w-20 h-20 mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
-                                <Bot className="w-10 h-10 text-primary" />
-                            </div>
-                            <h2 className="text-2xl font-bold mb-3">
-                                Ask About {projectName}
-                            </h2>
-                            <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                                I have access to all the knowledge indexed in this project.
-                                Ask me anything, either by typing or using voice!
-                            </p>
+    // Submit on Enter (without Shift)
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleFormSubmit(e as any);
+        }
+    };
 
-                            {/* Quick prompts */}
-                            <div className="flex flex-wrap justify-center gap-3">
-                                {[
-                                    'What topics are covered?',
-                                    'Summarize the main points',
-                                    'What should I know first?',
-                                ].map((prompt) => (
-                                    <Button
-                                        key={prompt}
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setInput(prompt)}
-                                        className="rounded-full"
-                                    >
-                                        <Sparkles className="w-3 h-3 mr-2 text-primary" />
-                                        {prompt}
-                                    </Button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    ) : (
-                        <div className="space-y-6">
-                            {messages.map((message, index) => (
+    return (
+        <div className="flex flex-col h-full w-full relative bg-background">
+            {/* Messages Area - Centered Stream */}
+            <div className="flex-1 overflow-hidden relative">
+                <ScrollArea className="h-full w-full">
+                    <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 space-y-8">
+                        {messages.length === 0 ? (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex flex-col items-center justify-center text-center mt-20"
+                            >
+                                <div className="w-16 h-16 rounded-full bg-secondary mb-6 flex items-center justify-center">
+                                    <Bot className="w-8 h-8 text-primary" />
+                                </div>
+                                <h2 className="text-2xl font-semibold mb-2">How can I help you?</h2>
+                                <p className="text-muted-foreground mb-8 text-sm max-w-md">
+                                    Ask me anything about {projectName}. I can analyze documents, explain concepts, and more.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                                    {[
+                                        'Summarize this project',
+                                        'What are the key findings?',
+                                        'Explain the architecture',
+                                        'List the contributors'
+                                    ].map((prompt, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setInput(prompt)}
+                                            className="text-left p-3 rounded-xl border bg-background hover:bg-muted/50 transition-colors text-sm text-foreground/80 dark:text-foreground/70"
+                                        >
+                                            {prompt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        ) : (
+                            messages.map((message) => (
                                 <motion.div
                                     key={message.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.2 }}
                                     className={cn(
-                                        "flex gap-4 w-full",
+                                        "flex gap-4 w-full group",
                                         message.role === 'user' ? "justify-end" : "justify-start"
                                     )}
                                 >
+                                    {/* Avatar for Assistant */}
                                     {message.role === 'assistant' && (
-                                        <Avatar className="w-8 h-8 border">
-                                            <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
-                                        </Avatar>
+                                        <div className="w-8 h-8 rounded-full border flex items-center justify-center shrink-0 bg-background">
+                                            <Bot className="w-5 h-5 text-primary" />
+                                        </div>
                                     )}
 
-                                    <div
-                                        className={cn(
-                                            "max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm",
-                                            message.role === 'user'
-                                                ? "bg-primary text-primary-foreground rounded-br-none"
-                                                : "bg-muted/50 rounded-bl-none border"
-                                        )}
-                                    >
-                                        {message.role === 'user' ? (
-                                            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                                {message.content}
-                                            </p>
-                                        ) : (
-                                            <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm]}
-                                                    components={{
-                                                        code: ({ className, children }) => {
-                                                            const isInline = !className;
-                                                            return isInline ? (
-                                                                <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono border">
-                                                                    {children}
-                                                                </code>
-                                                            ) : (
-                                                                <code className="block bg-muted p-3 px-4 rounded-lg my-2 overflow-x-auto text-xs font-mono border">
-                                                                    {children}
-                                                                </code>
-                                                            );
-                                                        },
-                                                    }}
-                                                >
-                                                    {message.content}
-                                                </ReactMarkdown>
-                                            </div>
-                                        )}
+                                    <div className={cn(
+                                        "relative max-w-[85%] md:max-w-[80%]",
+                                        message.role === 'user'
+                                            ? "space-y-1"
+                                            : "space-y-2 w-full"
+                                    )}>
+                                        {/* User Name / Bot Name (optional, kept minimal like ChatGPT) */}
+                                        <div className={cn(
+                                            "text-xs font-semibold select-none opacity-0 group-hover:opacity-100 transition-opacity",
+                                            message.role === 'user' ? "text-right" : "text-left"
+                                        )}>
+                                            {message.role === 'user' ? 'You' : 'Assistant'}
+                                        </div>
 
-                                        {/* TTS Button for assistant messages */}
-                                        {message.role === 'assistant' && message.content && !isLoading && (
-                                            <div className="mt-2 pt-2 border-t border-border/50">
+                                        <div className={cn(
+                                            "rounded-3xl px-5 py-3.5",
+                                            message.role === 'user'
+                                                ? "bg-secondary text-secondary-foreground"
+                                                : "text-foreground p-0 bg-transparent" // Assistant messages often just text in ChatGPT (or huge blocks)
+                                        )}>
+                                            {message.role === 'user' ? (
+                                                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                                                    {message.content}
+                                                </p>
+                                            ) : (
+                                                <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed">
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        components={{
+                                                            code: ({ className, children }) => {
+                                                                const isInline = !className;
+                                                                return isInline ? (
+                                                                    <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono border">
+                                                                        {children}
+                                                                    </code>
+                                                                ) : (
+                                                                    <code className="block bg-muted/50 p-3 px-4 rounded-lg my-2 overflow-x-auto text-xs font-mono border">
+                                                                        {children}
+                                                                    </code>
+                                                                );
+                                                            },
+                                                        }}
+                                                    >
+                                                        {message.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Audio Playback & Actions */}
+                                        {message.role === 'assistant' && !isLoading && (
+                                            <div className="flex items-center gap-2 pt-1">
                                                 <AudioPlayback text={message.content} />
                                             </div>
                                         )}
                                     </div>
 
-                                    {message.role === 'user' && (
-                                        <Avatar className="w-8 h-8 border bg-primary text-primary-foreground">
-                                            <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
-                                        </Avatar>
-                                    )}
+                                    {/* Avatar for User? (Normally users don't see their own avatar in ChatGPT, just right aligned bubble) 
+                                        I'll hide it for cleaner look, or just use a placeholder if preferred. 
+                                        I will Hide it for now to be closer to ChatGPT. 
+                                    */}
                                 </motion.div>
-                            ))}
-                        </div>
-                    )}
+                            ))
+                        )}
 
-                    {/* Loading indicator */}
-                    {isLoading && (
-                        <div className="flex gap-4 items-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <Avatar className="w-8 h-8 border">
-                                <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
-                            </Avatar>
-                            <div className="bg-muted/50 rounded-2xl rounded-bl-none px-4 py-3 border flex items-center gap-2">
-                                <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                                <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                                <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" />
-                            </div>
-                        </div>
-                    )}
+                        {isLoading && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex gap-4 w-full"
+                            >
+                                <div className="w-8 h-8 rounded-full border flex items-center justify-center shrink-0 bg-background">
+                                    <Bot className="w-5 h-5 text-primary" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                    <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                    <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" />
+                                </div>
+                            </motion.div>
+                        )}
+                        <div ref={messagesEndRef} className="h-12" />
+                    </div>
+                </ScrollArea>
 
-                    <div ref={messagesEndRef} className="h-4" />
-                </div>
-            </ScrollArea>
+                {/* Scroll to bottom button could go here */}
+            </div>
 
-            {/* Input Area */}
-            <div className="mt-auto p-4 bg-background/80 backdrop-blur-lg border-t z-10 w-full">
-                <div className="max-w-4xl mx-auto w-full">
-                    <form onSubmit={handleFormSubmit} className="flex gap-2 items-end w-full">
-                        {/* Voice Mode Toggle */}
+            {/* Input Area - Fixed Bottom Capsule */}
+            <div className="p-4 md:p-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="max-w-3xl mx-auto">
+                    <form
+                        onSubmit={handleFormSubmit}
+                        className="relative flex items-end gap-2 bg-muted/40 border p-2 rounded-[2rem] focus-within:ring-2 focus-within:ring-ring/20 transition-all shadow-sm"
+                    >
+                        {/* Attachment / Plus Button (Placeholder) */}
                         <Button
                             type="button"
-                            variant={isVoiceMode ? "secondary" : "ghost"}
+                            variant="ghost"
                             size="icon"
-                            onClick={() => setIsVoiceMode(!isVoiceMode)}
-                            className="mb-1 shrink-0"
-                            title={isVoiceMode ? "Switch to Text" : "Switch to Voice"}
+                            className="rounded-full h-10 w-10 text-muted-foreground hover:bg-muted"
                         >
-                            {isVoiceMode ? <Keyboard className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                            <PlusIcon className="w-5 h-5" />
                         </Button>
 
-                        {isVoiceMode ? (
-                            <div className="flex-1 mb-1">
-                                <VoiceInput onTranscript={handleVoiceTranscript} disabled={isLoading} />
-                            </div>
-                        ) : (
-                            <div className="flex-1 relative w-full">
-                                <Textarea
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder="Ask a question..."
-                                    className="min-h-[44px] max-h-32 resize-none py-3 px-4 rounded-xl focus-visible:ring-1 pr-12 w-full"
-                                    rows={1}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            handleFormSubmit(e);
-                                        }
-                                    }}
-                                    disabled={isLoading}
-                                />
-                                <Button
-                                    type="submit"
-                                    size="icon"
-                                    disabled={!input.trim() || isLoading}
-                                    className="absolute right-2 bottom-2 h-8 w-8 shrink-0"
-                                >
-                                    <Send className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        )}
+                        <Textarea
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Message ChatGPT..."
+                            className="min-h-[44px] max-h-32 resize-none border-0 shadow-none focus-visible:ring-0 bg-transparent py-3 px-2 flex-1"
+                            rows={1}
+                        />
+
+                        {/* Right Actions: Voice & Send */}
+                        <div className="flex items-center gap-1">
+                            <VoiceInput
+                                onTranscript={handleVoiceTranscript}
+                                disabled={isLoading}
+                                compact={true}
+                            />
+
+                            <Button
+                                type="submit"
+                                size="icon"
+                                disabled={!input.trim() || isLoading}
+                                className={cn(
+                                    "rounded-full h-10 w-10 transition-all duration-200",
+                                    input.trim() ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted"
+                                )}
+                            >
+                                <Send className="w-5 h-5" />
+                            </Button>
+                        </div>
                     </form>
+                    <div className="text-center mt-2">
+                        <p className="text-[10px] text-muted-foreground">
+                            AI Knowledge Hub can make mistakes. Check important info.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
+    );
+}
+// Helper Icon for Plus
+function PlusIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+        </svg>
     );
 }

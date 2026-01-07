@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import ChatInterface from '@/components/chat/ChatInterface';
+import ChatSidebar from '@/components/chat/ChatSidebar';
 import { Project } from '@/lib/supabase';
 
 export default function ChatPage() {
@@ -51,7 +52,7 @@ export default function ChatPage() {
                     <p className="text-slate-400 mb-6">The project you&apos;re looking for doesn&apos;t exist.</p>
                     <Link
                         href="/projects"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl gradient-primary text-white font-medium"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -64,50 +65,22 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
-            {/* Header */}
-            <header className="border-b border-slate-200/10 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-20">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href="/projects"
-                            className="p-2 rounded-xl hover:bg-slate-800 transition-colors"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                        </Link>
-                        <div>
-                            <motion.h1
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="font-bold text-lg gradient-text"
-                            >
-                                {project.name}
-                            </motion.h1>
-                            <p className="text-xs text-slate-500">Knowledge Query Interface</p>
-                        </div>
-                    </div>
+        <div className="flex h-screen bg-background overflow-hidden hover:overflow-hidden">
+            {/* Chat Sidebar */}
+            <ChatSidebar projectId={projectId} projectName={project.name} />
 
-                    <Link
-                        href="/admin"
-                        className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                    >
-                        Admin
-                    </Link>
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col relative h-full w-full overflow-hidden">
+                {/* Background effects (subtler now, confined to main area) */}
+                <div className="absolute inset-0 pointer-events-none z-0 opacity-50">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px]" />
                 </div>
-            </header>
 
-            {/* Background effects */}
-            <div className="fixed inset-0 pointer-events-none -z-10">
-                <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-            </div>
-
-            {/* Chat Interface */}
-            <div className="flex-1 relative">
-                <ChatInterface projectId={projectId} projectName={project.name} />
-            </div>
+                {/* Chat Interface */}
+                <div className="flex-1 relative z-10 w-full">
+                    <ChatInterface projectId={projectId} projectName={project.name} />
+                </div>
+            </main>
         </div>
     );
 }

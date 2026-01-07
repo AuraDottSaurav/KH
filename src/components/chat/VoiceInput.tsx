@@ -8,9 +8,11 @@ import { cn } from '@/lib/utils';
 interface VoiceInputProps {
     onTranscript: (transcript: string) => void;
     disabled?: boolean;
+    compact?: boolean;
+    className?: string;
 }
 
-export default function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
+export default function VoiceInput({ onTranscript, disabled, compact, className }: VoiceInputProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -74,8 +76,36 @@ export default function VoiceInput({ onTranscript, disabled }: VoiceInputProps) 
         }
     };
 
+    if (compact) {
+        return (
+            <Button
+                variant={isRecording ? "destructive" : "ghost"}
+                size="icon"
+                className={cn(
+                    "rounded-full transition-all duration-300 h-10 w-10",
+                    isRecording && "animate-pulse scale-110",
+                    className
+                )}
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onMouseLeave={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                disabled={disabled || isProcessing}
+                type="button"
+                title="Hold to speak"
+            >
+                {isProcessing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                    <Mic className={cn("w-5 h-5", isRecording && "fill-current")} />
+                )}
+            </Button>
+        );
+    }
+
     return (
-        <div className="w-full">
+        <div className={cn("w-full", className)}>
             <Button
                 variant={isRecording ? "destructive" : "secondary"}
                 size="lg"
