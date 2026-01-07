@@ -212,7 +212,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
             {/* Input Capsule */}
             <div className="relative group w-full max-w-2xl mx-auto">
                 <div className="absolute inset-0 bg-indigo-500/5 rounded-3xl blur-xl group-hover:bg-indigo-500/10 transition-colors duration-500" />
-                <div className="relative flex items-center gap-2 p-2 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl transition-all duration-300 focus-within:border-zinc-700/80 focus-within:bg-zinc-900/80">
+                <div className="relative flex items-end gap-2 p-2 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl transition-all duration-300 focus-within:border-zinc-700/80 focus-within:bg-zinc-900/80">
 
                     {/* File Attachment */}
                     <input
@@ -262,7 +262,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                                 value={textInput}
                                 onChange={(e) => setTextInput(e.target.value)}
                                 placeholder="Type, record, or attach to add knowledge..."
-                                className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none resize-none py-0 px-0 text-zinc-200 placeholder:text-zinc-500 text-sm leading-5 max-h-32 scrollbar-none"
+                                className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none resize-none py-2.5 px-0 text-zinc-200 placeholder:text-zinc-500 text-sm leading-5 max-h-32 scrollbar-none"
                                 rows={1}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -274,7 +274,6 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                             />
                         )}
                     </div>
-
                     {/* Right Actions */}
                     <div className="flex items-center gap-1 shrink-0">
                         {/* Voice Recording */}
@@ -303,9 +302,9 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                                 size="icon"
                                 onClick={handleSubmit}
                                 disabled={isProcessing}
-                                className="h-9 w-9 rounded-full bg-white text-black hover:bg-zinc-200 transition-all animate-in zoom-in duration-200 group/send"
+                                className="h-9 w-9 rounded-full bg-white text-black hover:bg-zinc-200 transition-all duration-200 group/send mb-0.5"
                             >
-                                <ArrowUp className="w-5 h-5 group-hover/send:-translate-y-0.5 group-hover/send:translate-x-0.5 transition-transform duration-300" />
+                                <ArrowUp className="w-5 h-5 transition-transform duration-300 group-hover/send:scale-110" />
                             </Button>
                         )}
                     </div>

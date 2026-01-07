@@ -29,6 +29,7 @@ export default function Sidebar({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const handleCreateProject = async () => {
         if (!newProjectName.trim()) return;
@@ -40,30 +41,41 @@ export default function Sidebar({
     };
 
     return (
-        <aside className="w-[300px] h-screen bg-zinc-900/40 border-r border-white/5 flex flex-col">
+        <aside
+            className={cn(
+                "h-screen bg-zinc-900/40 border-r border-white/5 flex flex-col transition-all duration-300 relative group/sidebar",
+                isCollapsed ? "w-[80px]" : "w-[300px]"
+            )}
+        >
             {/* Logo/Header */}
-            <div className="p-6">
+            <div className={cn("p-6 flex items-center", isCollapsed ? "justify-center px-0" : "")}>
                 <Link href="/" className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
                         <Zap className="w-5 h-5 fill-current" />
                     </div>
-                    <span className="font-bold text-lg tracking-tight text-zinc-100">Handover</span>
+                    {!isCollapsed && (
+                        <span className="font-bold text-lg tracking-tight text-zinc-100 whitespace-nowrap overflow-hidden transition-all duration-200">
+                            Handover
+                        </span>
+                    )}
                 </Link>
             </div>
 
             {/* Projects List */}
             <div className="flex-1 overflow-hidden flex flex-col px-4">
-                <div className="mb-4 pl-2">
-                    <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        Repositories
-                    </h2>
-                </div>
+                {!isCollapsed && (
+                    <div className="mb-4 pl-2 fade-in duration-300">
+                        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Repositories
+                        </h2>
+                    </div>
+                )}
 
                 <ScrollArea className="flex-1 -mx-2 px-2">
                     {isLoading ? (
                         <div className="space-y-2">
                             {[1, 2, 3].map((i) => (
-                                <Skeleton key={i} className="h-14 w-full rounded-xl bg-zinc-900" />
+                                <Skeleton key={i} className={cn("rounded-xl bg-zinc-900", isCollapsed ? "h-10 w-10 mx-auto" : "h-14 w-full")} />
                             ))}
                         </div>
                     ) : (
@@ -74,32 +86,37 @@ export default function Sidebar({
                                     onClick={() => onSelectProject(project)}
                                     className={cn(
                                         "w-full group flex items-center gap-3 p-3 text-left rounded-xl transition-all duration-200 border border-transparent",
-                                        activeProject?.id === project.id
+                                        activeProject?.id === project.id && !isCollapsed
                                             ? "bg-zinc-900 border-zinc-800"
-                                            : "hover:bg-zinc-900/50 hover:border-zinc-800/50"
+                                            : "hover:bg-zinc-900/50 hover:border-zinc-800/50",
+                                        isCollapsed ? "justify-center px-0" : ""
                                     )}
                                 >
                                     <div className={cn(
-                                        "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                                        "w-10 h-10 rounded-lg flex items-center justify-center transition-colors shrink-0",
                                         activeProject?.id === project.id
                                             ? "bg-indigo-500/10 text-indigo-400"
-                                            : "bg-zinc-800/50 text-zinc-500 group-hover:text-zinc-400"
+                                            : "bg-zinc-800/50 text-zinc-500 group-hover:text-zinc-200"
                                     )}>
                                         <LayoutGrid className="w-5 h-5" />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className={cn(
-                                            "font-medium text-sm truncate transition-colors",
-                                            activeProject?.id === project.id ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"
-                                        )}>
-                                            {project.name}
-                                        </p>
-                                        <p className="text-[10px] text-zinc-500 truncate">
-                                            {new Date(project.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </p>
-                                    </div>
-                                    {activeProject?.id === project.id && (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                                    {!isCollapsed && (
+                                        <>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={cn(
+                                                    "font-medium text-sm truncate transition-colors",
+                                                    activeProject?.id === project.id ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"
+                                                )}>
+                                                    {project.name}
+                                                </p>
+                                                <p className="text-[10px] text-zinc-500 truncate">
+                                                    {new Date(project.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </p>
+                                            </div>
+                                            {activeProject?.id === project.id && (
+                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                                            )}
+                                        </>
                                     )}
                                 </button>
                             ))}
@@ -109,12 +126,17 @@ export default function Sidebar({
             </div>
 
             {/* Create Project Button */}
-            <div className="p-4 mt-auto">
+            <div className={cn("p-4 mt-auto flex flex-col", isCollapsed ? "px-2 items-center" : "")}>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 h-12 rounded-xl text-xs font-semibold tracking-wider transition-all group">
-                            <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-                            NEW PROJECT
+                        <Button
+                            className={cn(
+                                "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 rounded-xl transition-all group",
+                                isCollapsed ? "h-12 w-12 p-0 justify-center" : "w-full h-12 text-xs font-semibold tracking-wider justify-center gap-1"
+                            )}
+                        >
+                            <Plus className={cn("w-4 h-4 transition-transform duration-300", isCollapsed ? "" : "group-hover:rotate-90")} />
+                            {!isCollapsed && "NEW REPOSITORY"}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -146,6 +168,14 @@ export default function Sidebar({
                     </DialogContent>
                 </Dialog>
             </div>
+
+            {/* Collapse Toggle */}
+            <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-700 transition-all z-50 opacity-0 group-hover/sidebar:opacity-100"
+            >
+                <div className="w-0.5 h-4 bg-current rounded-full" />
+            </button>
         </aside>
     );
 }

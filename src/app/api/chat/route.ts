@@ -293,6 +293,12 @@ CRITICAL INSTRUCTIONS - FOLLOW THESE WITHOUT EXCEPTION:
 9. SEARCH THE ENTIRE CONTEXT THOROUGHLY before saying information is not available.
 10. The context may contain the answer in different words - look for semantic matches, not just exact phrases.
 
+FORMATTING INSTRUCTIONS:
+- Break the information into small, readable chunks/paragraphs. Do NOT write long walls of text.
+- Use **bold** for important terms, key takeaways, and names of entities with high importance.
+- Use bullet points for any lists, steps, or when providing multiple related details to improve readability.
+- The output should be well-formatted and easy to scan.
+
 CONTEXT FROM KNOWLEDGE BASE (${allMatches.length} documents):
 ${context}
 

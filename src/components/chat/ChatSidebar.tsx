@@ -1,126 +1,120 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Plus, MessageSquare, Settings, LogOut, PanelLeft, Bot } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Plus, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ChatSidebarProps {
     projectId: string;
     projectName: string;
-    className?: string;
+    className?: string; // Add className prop to satisfy usage in page.tsx
 }
 
-export default function ChatSidebar({ projectId, projectName, className }: ChatSidebarProps) {
-    const [open, setOpen] = useState(false);
+// Dummy history data (replace with real data later)
+const MOCK_HISTORY = [
+    { id: '1', title: 'Latency buffers inquiry', date: '12m ago' },
+    { id: '2', title: 'Synthesis of Alpha core', date: '1h ago' },
+    { id: '3', title: 'Decentralized node logic', date: 'Yesterday' },
+];
 
-    const SidebarContent = () => (
-        <div className="flex flex-col h-full bg-muted/30 border-r">
-            {/* Header / New Chat */}
-            <div className="p-4">
+export default function ChatSidebar({ projectId, projectName, className }: ChatSidebarProps) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    return (
+        <aside
+            className={cn(
+                "h-screen bg-zinc-900/40 border-r border-white/5 flex flex-col transition-all duration-300 relative group/sidebar",
+                isCollapsed ? "w-[80px]" : "w-[300px]",
+                className
+            )}
+        >
+            {/* Logo/Header */}
+            <div className={cn("p-6 flex items-center", isCollapsed ? "justify-center px-0" : "")}>
+                <Link href="/" className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+                        <Zap className="w-5 h-5 fill-current" />
+                    </div>
+                    {!isCollapsed && (
+                        <span className="font-bold text-lg tracking-tight text-zinc-100 whitespace-nowrap overflow-hidden transition-all duration-200">
+                            Handover
+                        </span>
+                    )}
+                </Link>
+            </div>
+
+            {/* New Inquiry Button */}
+            <div className={cn("px-6 pb-6", isCollapsed ? "px-4" : "")}>
                 <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2 shadow-sm bg-background hover:bg-muted/50 transition-colors"
+                    variant="ghost"
+                    className={cn(
+                        "w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 rounded-xl transition-all group",
+                        isCollapsed ? "h-12 w-12 p-0 justify-center" : "h-12 text-xs font-semibold tracking-wider justify-center gap-1"
+                    )}
                 >
-                    <Plus className="w-4 h-4" />
-                    New chat
+                    <Plus className={cn("w-4 h-4 transition-transform duration-300", isCollapsed ? "" : "group-hover:rotate-90")} />
+                    {!isCollapsed && "NEW INQUIRY"}
                 </Button>
             </div>
 
             {/* History List */}
-            <ScrollArea className="flex-1 px-3">
-                <div className="space-y-4 py-2">
-                    <div className="px-3 py-2">
-                        <h2 className="mb-2 px-2 text-xs font-semibold tracking-tight text-muted-foreground/50 uppercase">
-                            Today
+            <div className="flex-1 overflow-hidden flex flex-col px-4">
+                {!isCollapsed && (
+                    <div className="mb-4 pl-2 fade-in duration-300">
+                        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Sync History
                         </h2>
-                        <div className="space-y-1">
-                            <Button variant="ghost" className="w-full justify-start text-sm font-normal h-9 px-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                <MessageSquare className="mr-2 h-4 w-4 opacity-50" />
-                                <span className="truncate">Understanding {projectName}</span>
-                            </Button>
-                            <Button variant="ghost" className="w-full justify-start text-sm font-normal h-9 px-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                <MessageSquare className="mr-2 h-4 w-4 opacity-50" />
-                                <span className="truncate">Key Concepts</span>
-                            </Button>
+                    </div>
+                )}
+
+                <ScrollArea className="flex-1 -mx-2 px-2">
+                    {isLoading ? (
+                        <div className="space-y-2">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton key={i} className={cn("rounded-xl bg-zinc-900", isCollapsed ? "h-10 w-10 mx-auto" : "h-14 w-full")} />
+                            ))}
                         </div>
-                    </div>
-
-                    <div className="px-3 py-2">
-                        <h2 className="mb-2 px-2 text-xs font-semibold tracking-tight text-muted-foreground/50 uppercase">
-                            Previous 7 Days
-                        </h2>
+                    ) : (
                         <div className="space-y-1">
-                            <Button variant="ghost" className="w-full justify-start text-sm font-normal h-9 px-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                <MessageSquare className="mr-2 h-4 w-4 opacity-50" />
-                                <span className="truncate">Project Architecture</span>
-                            </Button>
-                            <Button variant="ghost" className="w-full justify-start text-sm font-normal h-9 px-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                <MessageSquare className="mr-2 h-4 w-4 opacity-50" />
-                                <span className="truncate">Deployment Steps</span>
-                            </Button>
+                            {MOCK_HISTORY.map((item) => (
+                                <button
+                                    key={item.id}
+                                    className={cn(
+                                        "w-full group flex flex-col gap-1 p-3 rounded-xl transition-all duration-200 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-800/50",
+                                        isCollapsed ? "items-center justify-center py-4" : "text-left"
+                                    )}
+                                >
+                                    {isCollapsed ? (
+                                        <div className="w-2 h-2 rounded-full bg-zinc-800 group-hover:bg-indigo-500 transition-colors" />
+                                    ) : (
+                                        <>
+                                            <span className="font-bold text-xs text-zinc-300 group-hover:text-white transition-colors truncate w-full block">
+                                                {item.title}
+                                            </span>
+                                            <span className="text-[10px] text-zinc-500">
+                                                {item.date}
+                                            </span>
+                                        </>
+                                    )}
+                                </button>
+                            ))}
                         </div>
-                    </div>
-                </div>
-            </ScrollArea>
-
-            {/* User Profile / Bottom */}
-            <div className="p-4 border-t mt-auto">
-                <div className="flex items-center gap-3 mb-4 px-2">
-                    <Avatar className="h-8 w-8">
-                        <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col text-sm">
-                        <span className="font-medium">User</span>
-                        <span className="text-xs text-muted-foreground">Pro Plan</span>
-                    </div>
-                </div>
-
-                <div className="space-y-1">
-                    <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Settings
-                    </Button>
-                    <Link href="/projects" className="block w-full">
-                        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Back to Projects
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-        </div>
-    );
-
-    return (
-        <>
-            {/* Desktop Sidebar */}
-            <div className={cn("hidden md:block w-[260px] flex-shrink-0 h-full", className)}>
-                <SidebarContent />
+                    )}
+                </ScrollArea>
             </div>
 
-            {/* Mobile Sheet Trigger (To be placed in main layout usually, but we can put it here for now or export it) 
-                Actually, the trigger usually sits in the main header. 
-                For this design, let's export a MobileSidebar component or handle it in the Page layout.
-                But to be self-contained:
-            */}
-            <div className="md:hidden fixed top-4 left-4 z-50">
-                <Sheet open={open} onOpenChange={setOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="md:hidden">
-                            <PanelLeft className="h-5 w-5" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-[260px] flex flex-col gap-0">
-                        <SidebarContent />
-                    </SheetContent>
-                </Sheet>
-            </div>
-        </>
+            {/* Collapse Toggle */}
+            <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:border-zinc-700 transition-all z-50 opacity-0 group-hover/sidebar:opacity-100"
+            >
+                <div className="w-0.5 h-4 bg-current rounded-full" />
+            </button>
+
+        </aside>
     );
 }
-
