@@ -98,7 +98,7 @@ export default function ChatPage() {
     return (
         <div className="flex h-screen bg-black overflow-hidden selection:bg-indigo-500/30">
             {/* Chat Sidebar */}
-            <ChatSidebar projectId={projectId} projectName={project.name} refreshTrigger={refreshKey} />
+            <ChatSidebar projectId={projectId} projectName={project.name} refreshTrigger={refreshKey} activeChatId={chatId} />
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col relative h-full w-full overflow-hidden">

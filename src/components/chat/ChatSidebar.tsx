@@ -13,6 +13,7 @@ interface ChatSidebarProps {
     projectName: string;
     className?: string; // Add className prop to satisfy usage in page.tsx
     refreshTrigger?: number;
+    activeChatId?: string | null;
 }
 
 // Helper for relative time
@@ -38,7 +39,7 @@ interface Chat {
     created_at: string;
 }
 
-export default function ChatSidebar({ projectId, projectName, className, refreshTrigger = 0 }: ChatSidebarProps) {
+export default function ChatSidebar({ projectId, projectName, className, refreshTrigger = 0, activeChatId }: ChatSidebarProps) {
     const [isLoading, setIsLoading] = useState(true); // Start loading true
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [chats, setChats] = useState<Chat[]>([]);
@@ -113,29 +114,44 @@ export default function ChatSidebar({ projectId, projectName, className, refresh
                         </div>
                     ) : (
                         <div className="space-y-1">
-                            {chats.map((item) => (
-                                <Link
-                                    key={item.id}
-                                    href={`/chat/${projectId}?chatId=${item.id}`}
-                                    className={cn(
-                                        "w-full group flex flex-col gap-1 p-3 rounded-xl transition-all duration-200 border border-transparent hover:bg-zinc-900/50 hover:border-zinc-800/50 block",
-                                        isCollapsed ? "items-center justify-center py-4" : "text-left"
-                                    )}
-                                >
-                                    {isCollapsed ? (
-                                        <div className="w-2 h-2 rounded-full bg-zinc-800 group-hover:bg-indigo-500 transition-colors" />
-                                    ) : (
-                                        <>
-                                            <span className="font-bold text-xs text-zinc-300 group-hover:text-white transition-colors truncate w-full block">
-                                                {item.title}
-                                            </span>
-                                            <span className="text-[10px] text-zinc-500">
-                                                {getRelativeTime(item.created_at)}
-                                            </span>
-                                        </>
-                                    )}
-                                </Link>
-                            ))}
+                            {chats.map((item) => {
+                                const isActive = item.id === activeChatId;
+                                return (
+                                    <Link
+                                        key={item.id}
+                                        href={`/chat/${projectId}?chatId=${item.id}`}
+                                        className={cn(
+                                            "w-full group flex flex-col gap-1 p-3 rounded-xl transition-all duration-200 border block",
+                                            isCollapsed ? "items-center justify-center py-4" : "text-left",
+                                            isActive
+                                                ? "bg-indigo-500/10 border-indigo-500/30 hover:bg-indigo-500/15"
+                                                : "border-transparent hover:bg-zinc-900/50 hover:border-zinc-800/50"
+                                        )}
+                                    >
+                                        {isCollapsed ? (
+                                            <div className={cn(
+                                                "w-2 h-2 rounded-full transition-colors",
+                                                isActive ? "bg-indigo-500" : "bg-zinc-800 group-hover:bg-indigo-500"
+                                            )} />
+                                        ) : (
+                                            <>
+                                                <span className={cn(
+                                                    "font-bold text-xs transition-colors truncate w-full block",
+                                                    isActive ? "text-indigo-400" : "text-zinc-300 group-hover:text-white"
+                                                )}>
+                                                    {item.title}
+                                                </span>
+                                                <span className={cn(
+                                                    "text-[10px]",
+                                                    isActive ? "text-indigo-300/60" : "text-zinc-500"
+                                                )}>
+                                                    {getRelativeTime(item.created_at)}
+                                                </span>
+                                            </>
+                                        )}
+                                    </Link>
+                                );
+                            })}
                             {chats.length === 0 && !isCollapsed && (
                                 <div className="text-center text-zinc-600 text-xs py-4">No history yet</div>
                             )}

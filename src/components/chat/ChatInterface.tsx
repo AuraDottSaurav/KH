@@ -44,7 +44,72 @@ export default function ChatInterface({
     const [isInternalProcessing, setIsInternalProcessing] = useState(false); // For file uploads/transcription
     const [processingMessage, setProcessingMessage] = useState('');
     const [playingMessageId, setPlayingMessageId] = useState<string | null>(null); // Track TTS playback state
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
     const { toast } = useToast();
+
+    // Voice recording functions
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                stream.getTracks().forEach((track) => track.stop());
+                await processAudioRecording(audioBlob);
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            toast({ title: "Error", description: "Could not access microphone", variant: "destructive" });
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    const processAudioRecording = async (audioBlob: Blob) => {
+        setIsInternalProcessing(true);
+        setProcessingMessage('Transcribing audio...');
+
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            const response = await fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error('Transcription failed');
+
+            const { text } = await response.json();
+            if (text) {
+                setInput(text);
+                // Focus the textarea after transcription
+                textareaRef.current?.focus();
+            }
+        } catch (error) {
+            console.error('Error processing audio:', error);
+            toast({ title: "Error", description: "Failed to transcribe audio", variant: "destructive" });
+        } finally {
+            setIsInternalProcessing(false);
+            setProcessingMessage('');
+        }
+    };
 
     // Vercel AI SDK
     const { messages, input, setInput, handleSubmit, isLoading, append, data, setMessages } = useChat({
@@ -96,6 +161,32 @@ export default function ChatInterface({
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     }, [input]);
+
+    // Space bar keyboard shortcut for voice recording
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Only trigger if space is pressed and textarea is NOT focused
+            if (e.code === 'Space' && document.activeElement !== textareaRef.current && !isRecording && !isBusy) {
+                e.preventDefault();
+                startRecording();
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.code === 'Space' && isRecording) {
+                e.preventDefault();
+                stopRecording();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, [isRecording, isBusy]);
 
     // Simple file select (just UI state for now, as useChat might not handle files directly yet without config)
     const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -482,7 +573,7 @@ export default function ChatInterface({
 
                             {/* Right Actions */}
                             <div className="flex items-center gap-1 shrink-0">
-                                {/* Voice Recording (Visual only - simulated) */}
+                                {/* Voice Recording */}
                                 {!selectedFile && (
                                     <Button
                                         type="button"
@@ -493,9 +584,12 @@ export default function ChatInterface({
                                             "h-10 w-10 rounded-full transition-all group/mic",
                                             isRecording ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                                         )}
-                                        onMouseDown={() => setIsRecording(true)}
-                                        onMouseUp={() => setIsRecording(false)}
-                                        onMouseLeave={() => setIsRecording(false)}
+                                        onMouseDown={startRecording}
+                                        onMouseUp={stopRecording}
+                                        onMouseLeave={stopRecording}
+                                        onTouchStart={startRecording}
+                                        onTouchEnd={stopRecording}
+                                        title="Hold to speak"
                                     >
                                         <Mic className={cn("w-5 h-5 transition-transform duration-300", isRecording ? "animate-pulse scale-110" : "group-hover/mic:scale-110")} />
                                     </Button>

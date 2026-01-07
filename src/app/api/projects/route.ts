@@ -54,3 +54,47 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+// DELETE /api/projects - Delete a project by ID
+export async function DELETE(request: NextRequest) {
+    try {
+        const { id } = await request.json();
+
+        if (!id || typeof id !== 'string') {
+            return NextResponse.json(
+                { error: 'Project ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const supabase = createServerClient();
+
+        // Delete associated knowledge items first
+        await supabase
+            .from('knowledge_items')
+            .delete()
+            .eq('project_id', id);
+
+        // Delete associated chats
+        await supabase
+            .from('chats')
+            .delete()
+            .eq('project_id', id);
+
+        // Delete the project
+        const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        return NextResponse.json(
+            { error: 'Failed to delete project' },
+            { status: 500 }
+        );
+    }
+}
