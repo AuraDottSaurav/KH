@@ -6,6 +6,8 @@ import Sidebar from '@/components/admin/Sidebar';
 import CommandCenter from '@/components/admin/CommandCenter';
 import RecentUploads from '@/components/admin/RecentUploads';
 import { Project, KnowledgeItem } from '@/lib/supabase';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminPage() {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -74,7 +76,7 @@ export default function AdminPage() {
     }, [activeProject]);
 
     return (
-        <div className="min-h-screen flex">
+        <div className="min-h-screen flex bg-black text-foreground font-sans selection:bg-indigo-500/30">
             {/* Sidebar */}
             <Sidebar
                 projects={projects}
@@ -85,37 +87,43 @@ export default function AdminPage() {
             />
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col relative overflow-hidden">
+            <main className="flex-1 flex flex-col relative overflow-hidden bg-black">
                 {/* Background effects */}
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 pointer-events-none z-0">
+                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[100px]" />
+                    <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] bg-purple-500/5 rounded-full blur-[80px]" />
                 </div>
 
                 {/* Header */}
-                <header className="relative z-10 px-8 py-6 border-b border-slate-200/10">
+                <header className="relative z-10 px-8 py-8">
                     <AnimatePresence mode="wait">
                         {activeProject ? (
                             <motion.div
                                 key={activeProject.id}
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="flex items-start gap-4"
                             >
-                                <h1 className="text-2xl font-bold text-foreground">
-                                    {activeProject.name}
-                                </h1>
-                                <p className="text-slate-500 mt-1">
-                                    {knowledgeItems.length} knowledge items indexed
-                                </p>
+                                <Link href="/" className="mt-1 p-2 rounded-lg hover:bg-zinc-900 transition-colors">
+                                    <ArrowLeft className="w-5 h-5 text-zinc-500" />
+                                </Link>
+                                <div>
+                                    <h1 className="text-3xl font-bold text-white tracking-tight">
+                                        {activeProject.name}
+                                    </h1>
+                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+                                        {knowledgeItems.length} Knowledge Items Indexed
+                                    </p>
+                                </div>
                             </motion.div>
                         ) : (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                             >
-                                <h1 className="text-2xl font-bold text-slate-400">
-                                    Select or create a project
+                                <h1 className="text-2xl font-bold text-zinc-600">
+                                    Select a repository
                                 </h1>
                             </motion.div>
                         )}
@@ -123,16 +131,16 @@ export default function AdminPage() {
                 </header>
 
                 {/* Content Area */}
-                <div className="flex-1 relative z-10 flex flex-col">
+                <div className="flex-1 relative z-10 flex flex-col max-w-5xl mx-auto w-full px-8">
                     {activeProject ? (
                         <>
-                            {/* Recent Uploads */}
-                            <div className="flex-1 px-8 py-6 overflow-y-auto">
+                            {/* Recent Uploads (Scrollable) */}
+                            <div className="flex-1 overflow-y-auto pb-32 scrollbar-none">
                                 <RecentUploads items={knowledgeItems} />
                             </div>
 
                             {/* Command Center - Fixed at bottom */}
-                            <div className="sticky bottom-0 p-6 bg-slate-900/95 backdrop-blur-sm">
+                            <div className="absolute bottom-12 left-0 right-0 px-8">
                                 <CommandCenter
                                     projectId={activeProject.id}
                                     onKnowledgeAdded={handleKnowledgeAdded}
@@ -140,16 +148,18 @@ export default function AdminPage() {
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex items-center justify-center">
-                            <div className="text-center">
-                                <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
-                                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
+                        <div className="flex-1 flex items-center justify-center -mt-20">
+                            <div className="text-center p-12 border border-zinc-900 rounded-2xl bg-zinc-900/20 backdrop-blur-sm">
+                                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                    <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </div>
                                 </div>
-                                <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
-                                <p className="text-slate-500">
-                                    Create a new project from the sidebar to get started
+                                <h2 className="text-lg font-medium text-zinc-200 mb-2">No Repository Selected</h2>
+                                <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+                                    Select a repository from the sidebar or create a new one to start indexing knowledge.
                                 </p>
                             </div>
                         </div>

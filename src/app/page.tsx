@@ -72,18 +72,18 @@ export default function Home() {
 
             {/* Footer Features (Borderless Tabs) */}
             <div className="absolute bottom-8 left-0 w-full z-20 animate-in fade-in duration-1000 delay-500">
-                <div className="max-w-4xl mx-auto px-6 grid grid-cols-3 gap-4 md:gap-8">
-                    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900/20 backdrop-blur-sm text-center">
+                <div className="flex justify-center gap-6 md:gap-12 px-6">
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl text-center">
                         <Mic className="w-5 h-5 text-indigo-500 mb-2" />
-                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Voice Input</span>
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase whitespace-nowrap">Voice Input</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900/20 backdrop-blur-sm text-center">
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl text-center">
                         <FileUp className="w-5 h-5 text-indigo-500 mb-2" />
-                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">File Upload</span>
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase whitespace-nowrap">File Upload</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-zinc-900/20 backdrop-blur-sm text-center">
+                    <div className="flex flex-col items-center justify-center p-2 rounded-xl text-center">
                         <Search className="w-5 h-5 text-indigo-500 mb-2" />
-                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Semantic Search</span>
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase whitespace-nowrap">Semantic Search</span>
                     </div>
                 </div>
             </div>

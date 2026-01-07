@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Mic, Paperclip, Send, Upload } from 'lucide-react';
+import { Loader2, Mic, Paperclip, Send, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,7 +20,16 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { toast } = useToast();
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [textInput]);
 
     // Handle text submission
     const handleTextSubmit = async () => {
@@ -176,7 +183,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
     }, [projectId, onKnowledgeAdded, toast]);
 
     return (
-        <div className="relative w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-2xl mx-auto">
             {/* Processing Overlay */}
             <AnimatePresence>
                 {isProcessing && (
@@ -184,61 +191,61 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute -top-16 left-0 right-0 flex items-center justify-center z-10"
+                        className="flex justify-center mb-4"
                     >
-                        <Card className="px-4 py-2 flex items-center gap-3 shadow-lg bg-background/80 backdrop-blur">
-                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                            <span className="text-sm font-medium">{processingMessage}</span>
-                        </Card>
+                        <div className="px-4 py-2 flex items-center gap-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 shadow-xl">
+                            <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                            <span className="text-xs font-medium tracking-wide max-w-[200px] truncate">{processingMessage}</span>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Command Center Input */}
-            <Card className="border-2 shadow-sm focus-within:shadow-md transition-shadow focus-within:border-primary/20">
-                <CardContent className="p-2 flex items-end gap-2">
-                    {/* Text Input */}
-                    <div className="flex-1 min-w-0">
-                        <Textarea
-                            value={textInput}
-                            onChange={(e) => setTextInput(e.target.value)}
-                            placeholder="Dump knowledge here... (text, notes, information)"
-                            className="min-h-[60px] max-h-32 resize-none border-0 shadow-none focus-visible:ring-0 p-3 text-base"
-                            rows={1}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleTextSubmit();
-                                }
-                            }}
-                            disabled={isProcessing}
-                        />
-                    </div>
+            {/* Input Capsule */}
+            <div className="relative group">
+                <div className="absolute inset-0 bg-indigo-500/5 rounded-3xl blur-xl group-hover:bg-indigo-500/10 transition-colors duration-500" />
+                <div className="relative flex items-end gap-2 p-2 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl transition-all duration-300 focus-within:border-zinc-700/80 focus-within:bg-zinc-900/80">
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2 pb-1 pr-1">
-                        {/* File Upload */}
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            onChange={handleFileSelect}
-                            accept=".pdf,.doc,.docx,.txt,.mp3,.wav,.webm,.m4a"
-                            className="hidden"
-                        />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isProcessing}
-                            title="Upload file"
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            <Paperclip className="w-5 h-5" />
-                        </Button>
+                    {/* File Attachment */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={handleFileSelect}
+                        accept=".pdf,.doc,.docx,.txt,.mp3,.wav,.webm,.m4a"
+                        className="hidden"
+                    />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isProcessing}
+                        className="h-10 w-10 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0"
+                    >
+                        <Paperclip className="w-5 h-5" />
+                    </Button>
 
+                    {/* Text Area */}
+                    <textarea
+                        ref={textareaRef}
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        placeholder="Capture knowledge..."
+                        className="flex-1 w-full bg-transparent border-0 focus:ring-0 resize-none py-3 px-2 text-zinc-200 placeholder:text-zinc-600 text-sm leading-relaxed max-h-32 scrollbar-none"
+                        rows={1}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleTextSubmit();
+                            }
+                        }}
+                        disabled={isProcessing}
+                    />
+
+                    {/* Right Actions */}
+                    <div className="flex items-center gap-1 shrink-0 pb-1">
                         {/* Voice Recording */}
                         <Button
-                            variant={isRecording ? "destructive" : "ghost"}
+                            variant="ghost"
                             size="icon"
                             onMouseDown={startRecording}
                             onMouseUp={stopRecording}
@@ -246,44 +253,39 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                             onTouchStart={startRecording}
                             onTouchEnd={stopRecording}
                             disabled={isProcessing}
-                            title="Hold to record"
                             className={cn(
-                                "transition-all",
-                                isRecording && "animate-pulse scale-110",
-                                !isRecording && "text-muted-foreground hover:text-foreground"
+                                "h-9 w-9 rounded-full transition-all",
+                                isRecording ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                             )}
                         >
-                            <Mic className="w-5 h-5" />
+                            <Mic className="w-4 h-4" />
                         </Button>
 
-                        {/* Submit Text */}
-                        <Button
-                            size="icon"
-                            onClick={handleTextSubmit}
-                            disabled={!textInput.trim() || isProcessing}
-                            className={cn(
-                                "transition-all",
-                                textInput.trim() ? "opacity-100" : "opacity-50"
-                            )}
-                        >
-                            <Send className="w-4 h-4 ml-0.5" />
-                        </Button>
+                        {/* Submit */}
+                        {textInput.trim() && (
+                            <Button
+                                size="icon"
+                                onClick={handleTextSubmit}
+                                disabled={isProcessing}
+                                className="h-9 w-9 rounded-full bg-white text-black hover:bg-zinc-200 transition-all animate-in zoom-in duration-200"
+                            >
+                                <ArrowUp className="w-5 h-5" />
+                            </Button>
+                        )}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
-            {/* Helper Text */}
-            <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium opacity-100">
-                        Enter
-                    </kbd>
-                    <span>to submit</span>
+            {/* Helper Hints */}
+            <div className="mt-4 flex items-center justify-center gap-6 text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity">
+                    <span className="w-4 h-4 rounded border border-zinc-700 flex items-center justify-center bg-zinc-900">↵</span>
+                    <span>Enter to submit</span>
                 </span>
-                <span>•</span>
-                <span>Hold mic to record</span>
-                <span>•</span>
-                <span>PDF, Audio, Docs supported</span>
+                <span className="flex items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity">
+                    <span className="px-1.5 h-4 rounded border border-zinc-700 flex items-center justify-center bg-zinc-900 min-w-[2rem]">Space</span>
+                    <span>Hold space to record</span>
+                </span>
             </div>
         </div>
     );

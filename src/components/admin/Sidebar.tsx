@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Plus, Folder, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Zap, Box, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -40,107 +40,107 @@ export default function Sidebar({
     };
 
     return (
-        <aside className="w-72 h-screen bg-muted/40 border-r flex flex-col">
+        <aside className="w-[300px] h-screen bg-zinc-900/40 border-r border-white/5 flex flex-col">
             {/* Logo/Header */}
-            <div className="p-6 border-b bg-background/50 backdrop-blur-sm">
-                <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
+            <div className="p-6">
+                <Link href="/" className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                        <Zap className="w-5 h-5 fill-current" />
                     </div>
-                    <div>
-                        <h1 className="font-bold text-lg leading-tight">Knowledge Hub</h1>
-                        <p className="text-xs text-muted-foreground">Admin Portal</p>
-                    </div>
+                    <span className="font-bold text-lg tracking-tight text-zinc-100">Handover</span>
                 </Link>
             </div>
 
             {/* Projects List */}
-            <div className="flex-1 overflow-hidden flex flex-col p-4">
-                <div className="flex items-center justify-between mb-4 px-2">
-                    <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Projects
+            <div className="flex-1 overflow-hidden flex flex-col px-4">
+                <div className="mb-4 pl-2">
+                    <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                        Repositories
                     </h2>
-                    <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
-                        {projects.length}
-                    </span>
                 </div>
 
                 <ScrollArea className="flex-1 -mx-2 px-2">
                     {isLoading ? (
                         <div className="space-y-2">
                             {[1, 2, 3].map((i) => (
-                                <Skeleton key={i} className="h-12 w-full rounded-xl" />
+                                <Skeleton key={i} className="h-14 w-full rounded-xl bg-zinc-900" />
                             ))}
                         </div>
                     ) : (
                         <div className="space-y-1">
                             {projects.map((project) => (
-                                <Button
+                                <button
                                     key={project.id}
-                                    variant={activeProject?.id === project.id ? "secondary" : "ghost"}
-                                    className={cn(
-                                        "w-full justify-start h-auto py-3 px-3",
-                                        activeProject?.id === project.id && "bg-secondary"
-                                    )}
                                     onClick={() => onSelectProject(project)}
+                                    className={cn(
+                                        "w-full group flex items-center gap-3 p-3 text-left rounded-xl transition-all duration-200 border border-transparent",
+                                        activeProject?.id === project.id
+                                            ? "bg-zinc-900 border-zinc-800"
+                                            : "hover:bg-zinc-900/50 hover:border-zinc-800/50"
+                                    )}
                                 >
-                                    <Folder className={cn(
-                                        "w-4 h-4 mr-3",
-                                        activeProject?.id === project.id ? "text-primary" : "text-muted-foreground"
-                                    )} />
-                                    <div className="flex-1 text-left min-w-0">
-                                        <p className="font-medium truncate leading-none mb-1">{project.name}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {new Date(project.created_at).toLocaleDateString()}
+                                    <div className={cn(
+                                        "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                                        activeProject?.id === project.id
+                                            ? "bg-indigo-500/10 text-indigo-400"
+                                            : "bg-zinc-800/50 text-zinc-500 group-hover:text-zinc-400"
+                                    )}>
+                                        <LayoutGrid className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={cn(
+                                            "font-medium text-sm truncate transition-colors",
+                                            activeProject?.id === project.id ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"
+                                        )}>
+                                            {project.name}
+                                        </p>
+                                        <p className="text-[10px] text-zinc-500 truncate">
+                                            {new Date(project.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>
                                     </div>
-                                </Button>
+                                    {activeProject?.id === project.id && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                                    )}
+                                </button>
                             ))}
-
-                            {projects.length === 0 && (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <p className="text-sm">No projects yet</p>
-                                    <p className="text-xs mt-1">Create your first project below</p>
-                                </div>
-                            )}
                         </div>
                     )}
                 </ScrollArea>
             </div>
 
             {/* Create Project Button */}
-            <div className="p-4 border-t bg-background/50 backdrop-blur-sm">
+            <div className="p-4 mt-auto">
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full border-dashed">
+                        <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 h-12 rounded-xl text-xs font-semibold tracking-wider transition-all">
                             <Plus className="w-4 h-4 mr-2" />
-                            New Project
+                            NEW PROJECT
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Create New Project</DialogTitle>
+                            <DialogTitle>Create New Repository</DialogTitle>
                         </DialogHeader>
                         <div className="py-4">
                             <Input
-                                placeholder="Enter project name..."
+                                placeholder="Repository name..."
                                 value={newProjectName}
                                 onChange={(e) => setNewProjectName(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
+                                className="bg-zinc-900 border-zinc-800 focus-visible:ring-indigo-500"
                             />
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleCreateProject}
                                 disabled={!newProjectName.trim() || isCreating}
+                                className="bg-indigo-600 hover:bg-indigo-700"
                             >
                                 {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                Create Project
+                                Create Repository
                             </Button>
                         </DialogFooter>
                     </DialogContent>
