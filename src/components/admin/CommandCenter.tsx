@@ -2,6 +2,12 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Mic, Paperclip, Send, Upload } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommandCenterProps {
     projectId: string;
@@ -16,6 +22,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     // Handle text submission
     const handleTextSubmit = async () => {
@@ -39,8 +46,10 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
 
             setTextInput('');
             onKnowledgeAdded();
+            toast({ title: "Success", description: "Text added to knowledge base" });
         } catch (error) {
             console.error('Error ingesting text:', error);
+            toast({ title: "Error", description: "Failed to ingest text", variant: "destructive" });
         } finally {
             setIsProcessing(false);
             setProcessingMessage('');
@@ -69,6 +78,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
             setIsRecording(true);
         } catch (error) {
             console.error('Error starting recording:', error);
+            toast({ title: "Error", description: "Could not access microphone", variant: "destructive" });
         }
     };
 
@@ -113,8 +123,10 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
             if (!ingestResponse.ok) throw new Error('Failed to ingest transcription');
 
             onKnowledgeAdded();
+            toast({ title: "Success", description: "Voice note processed and added" });
         } catch (error) {
             console.error('Error processing audio:', error);
+            toast({ title: "Error", description: "Failed to process audio", variant: "destructive" });
         } finally {
             setIsProcessing(false);
             setProcessingMessage('');
@@ -150,8 +162,10 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
             if (!response.ok) throw new Error('Failed to ingest file');
 
             onKnowledgeAdded();
+            toast({ title: "Success", description: "File uploaded successfully" });
         } catch (error) {
             console.error('Error processing file:', error);
+            toast({ title: "Error", description: "Failed to upload file", variant: "destructive" });
         } finally {
             setIsProcessing(false);
             setProcessingMessage('');
@@ -159,10 +173,10 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                 fileInputRef.current.value = '';
             }
         }
-    }, [projectId, onKnowledgeAdded]);
+    }, [projectId, onKnowledgeAdded, toast]);
 
     return (
-        <div className="relative">
+        <div className="relative w-full max-w-4xl mx-auto">
             {/* Processing Overlay */}
             <AnimatePresence>
                 {isProcessing && (
@@ -170,101 +184,101 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute -top-16 left-0 right-0 flex items-center justify-center"
+                        className="absolute -top-16 left-0 right-0 flex items-center justify-center z-10"
                     >
-                        <div className="bg-slate-800 rounded-xl px-4 py-2 flex items-center gap-3 shadow-lg">
-                            <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-sm text-slate-300">{processingMessage}</span>
-                        </div>
+                        <Card className="px-4 py-2 flex items-center gap-3 shadow-lg bg-background/80 backdrop-blur">
+                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                            <span className="text-sm font-medium">{processingMessage}</span>
+                        </Card>
                     </motion.div>
                 )}
             </AnimatePresence>
 
             {/* Command Center Input */}
-            <div className="glass rounded-2xl p-2 flex items-end gap-2 shadow-glow">
-                {/* Text Input */}
-                <div className="flex-1 relative">
-                    <textarea
-                        value={textInput}
-                        onChange={(e) => setTextInput(e.target.value)}
-                        placeholder="Dump knowledge here... (text, notes, information)"
-                        className="w-full resize-none bg-transparent px-4 py-3 outline-none text-white placeholder-slate-400 max-h-32 min-h-[48px]"
-                        rows={1}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleTextSubmit();
-                            }
-                        }}
-                        disabled={isProcessing}
-                    />
-                </div>
+            <Card className="border-2 shadow-sm focus-within:shadow-md transition-shadow focus-within:border-primary/20">
+                <CardContent className="p-2 flex items-end gap-2">
+                    {/* Text Input */}
+                    <div className="flex-1 min-w-0">
+                        <Textarea
+                            value={textInput}
+                            onChange={(e) => setTextInput(e.target.value)}
+                            placeholder="Dump knowledge here... (text, notes, information)"
+                            className="min-h-[60px] max-h-32 resize-none border-0 shadow-none focus-visible:ring-0 p-3 text-base"
+                            rows={1}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleTextSubmit();
+                                }
+                            }}
+                            disabled={isProcessing}
+                        />
+                    </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 pb-1">
-                    {/* File Upload */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        onChange={handleFileSelect}
-                        accept=".pdf,.doc,.docx,.txt,.mp3,.wav,.webm,.m4a"
-                        className="hidden"
-                    />
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isProcessing}
-                        className="p-3 rounded-xl bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-white transition-all disabled:opacity-50"
-                        title="Upload file (PDF, Audio, Document)"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                    </motion.button>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 pb-1 pr-1">
+                        {/* File Upload */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            onChange={handleFileSelect}
+                            accept=".pdf,.doc,.docx,.txt,.mp3,.wav,.webm,.m4a"
+                            className="hidden"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isProcessing}
+                            title="Upload file"
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            <Paperclip className="w-5 h-5" />
+                        </Button>
 
-                    {/* Voice Recording */}
-                    <motion.button
-                        whileHover={!isRecording ? { scale: 1.05 } : {}}
-                        whileTap={!isRecording ? { scale: 0.95 } : {}}
-                        onMouseDown={startRecording}
-                        onMouseUp={stopRecording}
-                        onMouseLeave={stopRecording}
-                        onTouchStart={startRecording}
-                        onTouchEnd={stopRecording}
-                        disabled={isProcessing}
-                        className={`p-3 rounded-xl transition-all disabled:opacity-50 ${isRecording
-                                ? 'bg-red-500 text-white recording-pulse'
-                                : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-white'
-                            }`}
-                        title="Hold to record voice"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                        </svg>
-                    </motion.button>
+                        {/* Voice Recording */}
+                        <Button
+                            variant={isRecording ? "destructive" : "ghost"}
+                            size="icon"
+                            onMouseDown={startRecording}
+                            onMouseUp={stopRecording}
+                            onMouseLeave={stopRecording}
+                            onTouchStart={startRecording}
+                            onTouchEnd={stopRecording}
+                            disabled={isProcessing}
+                            title="Hold to record"
+                            className={cn(
+                                "transition-all",
+                                isRecording && "animate-pulse scale-110",
+                                !isRecording && "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            <Mic className="w-5 h-5" />
+                        </Button>
 
-                    {/* Submit Text */}
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleTextSubmit}
-                        disabled={!textInput.trim() || isProcessing}
-                        className="p-3 rounded-xl gradient-primary text-white shadow-glow hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Submit text"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                    </motion.button>
-                </div>
-            </div>
+                        {/* Submit Text */}
+                        <Button
+                            size="icon"
+                            onClick={handleTextSubmit}
+                            disabled={!textInput.trim() || isProcessing}
+                            className={cn(
+                                "transition-all",
+                                textInput.trim() ? "opacity-100" : "opacity-50"
+                            )}
+                        >
+                            <Send className="w-4 h-4 ml-0.5" />
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Helper Text */}
-            <div className="mt-3 flex items-center justify-center gap-4 text-xs text-slate-500">
+            <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 bg-slate-700 rounded text-slate-400">Enter</kbd>
-                    to submit text
+                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium opacity-100">
+                        Enter
+                    </kbd>
+                    <span>to submit</span>
                 </span>
                 <span>•</span>
                 <span>Hold mic to record</span>

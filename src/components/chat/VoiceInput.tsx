@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Mic, Square, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface VoiceInputProps {
     onTranscript: (transcript: string) => void;
@@ -73,51 +75,39 @@ export default function VoiceInput({ onTranscript, disabled }: VoiceInputProps) 
     };
 
     return (
-        <div className="flex items-center gap-4">
-            {/* Recording Button */}
-            <motion.button
-                whileHover={!isRecording ? { scale: 1.02 } : {}}
-                whileTap={!isRecording ? { scale: 0.98 } : {}}
+        <div className="w-full">
+            <Button
+                variant={isRecording ? "destructive" : "secondary"}
+                size="lg"
+                className={cn(
+                    "w-full transition-all duration-300 gap-2 font-medium",
+                    isRecording && "animate-pulse"
+                )}
                 onMouseDown={startRecording}
                 onMouseUp={stopRecording}
                 onMouseLeave={stopRecording}
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
                 disabled={disabled || isProcessing}
-                className={`flex-1 py-4 rounded-xl flex items-center justify-center gap-3 transition-all ${isRecording
-                        ? 'bg-red-500 text-white recording-pulse'
-                        : isProcessing
-                            ? 'bg-slate-700 text-slate-400'
-                            : 'bg-slate-800 hover:bg-slate-700 text-white'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                type="button"
             >
                 {isProcessing ? (
                     <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Processing...</span>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Processing Cloud Speech...
                     </>
                 ) : isRecording ? (
                     <>
-                        <div className="flex items-center gap-1 h-5">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <div
-                                    key={i}
-                                    className="w-1 bg-white waveform-bar"
-                                    style={{ animationDelay: `${i * 0.1}s` }}
-                                />
-                            ))}
-                        </div>
-                        <span>Recording... Release to send</span>
+                        <Square className="w-5 h-5 fill-current" />
+                        Release to Send Audio
                     </>
                 ) : (
                     <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                        </svg>
-                        <span>Hold to speak</span>
+                        <Mic className="w-5 h-5" />
+                        Hold to Speak
                     </>
                 )}
-            </motion.button>
+            </Button>
         </div>
     );
 }

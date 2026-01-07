@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Loader2, Play, Pause, AlertCircle, Volume2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AudioPlaybackProps {
     text: string;
@@ -14,7 +16,7 @@ export default function AudioPlayback({ text }: AudioPlaybackProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const audioUrlRef = useRef<string | null>(null);
     const hasStartedPreload = useRef(false);
-    const isPlayingRef = useRef(false); // Track playing state in ref to avoid stale closures
+    const isPlayingRef = useRef(false);
 
     // Start preloading immediately when component mounts
     useEffect(() => {
@@ -92,20 +94,14 @@ export default function AudioPlayback({ text }: AudioPlaybackProps) {
     }, [text]);
 
     const handleClick = async () => {
-        console.log('[TTS] Button clicked, current state:', audioState, 'isPlaying:', isPlayingRef.current);
-
         const audio = audioRef.current;
-        if (!audio) {
-            console.log('[TTS] No audio element');
-            return;
-        }
+        if (!audio) return;
 
         // If currently playing, pause
         if (isPlayingRef.current) {
             audio.pause();
             isPlayingRef.current = false;
             setAudioState('ready');
-            console.log('[TTS] Paused');
             return;
         }
 
@@ -113,14 +109,9 @@ export default function AudioPlayback({ text }: AudioPlaybackProps) {
         if (audioState === 'ready' || audioState === 'playing') {
             try {
                 audio.currentTime = 0;
-
-                // Set playing state FIRST
                 isPlayingRef.current = true;
                 setAudioState('playing');
-                console.log('[TTS] Starting playback');
-
                 await audio.play();
-                console.log('[TTS] Playback started');
             } catch (error) {
                 console.error('[TTS] Play error:', error);
                 isPlayingRef.current = false;
@@ -138,56 +129,45 @@ export default function AudioPlayback({ text }: AudioPlaybackProps) {
     };
 
     return (
-        <motion.button
-            whileHover={{ scale: audioState !== 'preloading' ? 1.02 : 1 }}
-            whileTap={{ scale: audioState !== 'preloading' ? 0.98 : 1 }}
+        <Button
+            variant={audioState === 'playing' ? "secondary" : "ghost"}
+            size="sm"
             onClick={handleClick}
             disabled={audioState === 'preloading'}
-            className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg transition-all ${audioState === 'playing'
-                    ? 'bg-purple-500/30 text-purple-300'
-                    : audioState === 'ready'
-                        ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 hover:text-green-300'
-                        : audioState === 'error'
-                            ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300'
-                            : audioState === 'preloading'
-                                ? 'bg-slate-700/50 text-slate-400 cursor-wait'
-                                : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white'
-                }`}
+            className={cn(
+                "h-8 px-3 text-xs gap-2 transition-all duration-300",
+                audioState === 'playing' && "bg-primary/10 text-primary hover:bg-primary/20",
+                audioState === 'ready' && "text-muted-foreground hover:text-foreground",
+                audioState === 'error' && "text-destructive hover:text-destructive",
+                audioState === 'preloading' && "opacity-70"
+            )}
         >
             {audioState === 'preloading' ? (
                 <>
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    <span>Preparing...</span>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Preparing...
                 </>
             ) : audioState === 'playing' ? (
                 <>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                    </svg>
-                    <span>Pause</span>
+                    <Pause className="w-3.5 h-3.5 fill-current" />
+                    Pause
                 </>
             ) : audioState === 'ready' ? (
                 <>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                    <span>Play</span>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    Play Output
                 </>
             ) : audioState === 'error' ? (
                 <>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                    </svg>
-                    <span>Retry</span>
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    Retry
                 </>
             ) : (
                 <>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                    <span>Listen</span>
+                    <Volume2 className="w-3.5 h-3.5" />
+                    Listen
                 </>
             )}
-        </motion.button>
+        </Button>
     );
 }
