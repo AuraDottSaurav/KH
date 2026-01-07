@@ -68,19 +68,36 @@ export async function POST(request: NextRequest) {
                 .join('\n\n---\n\n');
         }
 
-        // Create system prompt with RAG context
+        // Create system prompt with RAG context - STRICT knowledge base only
+        const noDataFoundMessage = `I couldn't find any relevant information about this in our knowledge base yet. This topic may not have been added by the admin. Please reach out to your administrator if you believe this information should be available.`;
+
         const systemPrompt = context
-            ? `You are a helpful AI assistant with access to a specific knowledge base. Answer the user's questions based ONLY on the following context. If the context doesn't contain relevant information to answer the question, say "No relevant knowledge found in this project."
+            ? `You are a knowledge assistant for this platform. You MUST answer questions based EXCLUSIVELY on the context provided below. 
+
+CRITICAL INSTRUCTIONS - FOLLOW THESE WITHOUT EXCEPTION:
+1. You are FORBIDDEN from using ANY knowledge from your training data or general knowledge.
+2. You can ONLY use information that appears in the CONTEXT section below.
+3. If the user's question cannot be fully answered using ONLY the context below, respond with: "${noDataFoundMessage}"
+4. Do NOT fill gaps with assumptions, inferences, or external knowledge.
+5. Do NOT provide additional information beyond what is explicitly stated in the context.
+6. If you are even slightly unsure whether information is in the context, say you don't have that information.
+7. When answering, quote or closely paraphrase the context. Do not elaborate beyond it.
+8. Never say "based on my knowledge" or similar phrases - you have NO knowledge outside this context.
 
 CONTEXT FROM KNOWLEDGE BASE:
 ${context}
 
-IMPORTANT RULES:
-1. Only use information from the context above
-2. If asked about something not in the context, reply: "No relevant knowledge found in this project."
-3. Be concise but thorough in your answers
-4. Cite specific parts of the context when applicable`
-            : `You are a helpful AI assistant. Unfortunately, there is no knowledge indexed in this project yet. If the user asks any questions about specific knowledge, reply: "No relevant knowledge found in this project." You can still have general conversations.`;
+Remember: If it's not in the context above, you don't know it. Period.`
+            : `You are a knowledge assistant for this platform. There is currently no knowledge indexed in this project.
+
+For ANY question the user asks, respond with: "${noDataFoundMessage}"
+
+You are NOT allowed to:
+- Answer questions using your training data
+- Have general conversations
+- Provide any information not from this platform's knowledge base
+
+Simply inform the user that no knowledge has been added yet and they should contact their administrator.`;
 
         // Stream the response using GPT-4o
         const result = streamText({

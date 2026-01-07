@@ -3,6 +3,8 @@
 import { useRef, useEffect, useState } from 'react';
 import { useChat } from 'ai/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import VoiceInput from './VoiceInput';
 import AudioPlayback from './AudioPlayback';
 
@@ -101,13 +103,105 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
 
                                     <div
                                         className={`max-w-[80%] ${message.role === 'user'
-                                                ? 'gradient-primary text-white rounded-2xl rounded-br-md px-4 py-3'
-                                                : 'glass rounded-2xl rounded-tl-md px-4 py-3'
+                                            ? 'gradient-primary text-white rounded-2xl rounded-br-md px-4 py-3'
+                                            : 'glass rounded-2xl rounded-tl-md px-4 py-3'
                                             }`}
                                     >
-                                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                            {message.content}
-                                        </p>
+                                        {message.role === 'user' ? (
+                                            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                                                {message.content}
+                                            </p>
+                                        ) : (
+                                            <div className="prose prose-invert prose-sm max-w-none">
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={{
+                                                        // Headers
+                                                        h1: ({ children }) => (
+                                                            <h1 className="text-xl font-bold mt-4 mb-2 text-white first:mt-0">{children}</h1>
+                                                        ),
+                                                        h2: ({ children }) => (
+                                                            <h2 className="text-lg font-semibold mt-4 mb-2 text-white first:mt-0">{children}</h2>
+                                                        ),
+                                                        h3: ({ children }) => (
+                                                            <h3 className="text-base font-semibold mt-3 mb-1.5 text-white first:mt-0">{children}</h3>
+                                                        ),
+                                                        // Paragraphs
+                                                        p: ({ children }) => (
+                                                            <p className="mb-3 last:mb-0 leading-relaxed text-slate-200">{children}</p>
+                                                        ),
+                                                        // Lists
+                                                        ul: ({ children }) => (
+                                                            <ul className="list-disc list-inside mb-3 space-y-1.5 text-slate-200">{children}</ul>
+                                                        ),
+                                                        ol: ({ children }) => (
+                                                            <ol className="list-decimal list-inside mb-3 space-y-1.5 text-slate-200">{children}</ol>
+                                                        ),
+                                                        li: ({ children }) => (
+                                                            <li className="leading-relaxed">{children}</li>
+                                                        ),
+                                                        // Code
+                                                        code: ({ className, children }) => {
+                                                            const isInline = !className;
+                                                            return isInline ? (
+                                                                <code className="bg-slate-700/50 px-1.5 py-0.5 rounded text-purple-300 text-xs font-mono">
+                                                                    {children}
+                                                                </code>
+                                                            ) : (
+                                                                <code className="block bg-slate-800/80 p-3 rounded-lg my-3 overflow-x-auto text-xs font-mono text-slate-200 border border-slate-700/50">
+                                                                    {children}
+                                                                </code>
+                                                            );
+                                                        },
+                                                        pre: ({ children }) => (
+                                                            <pre className="bg-slate-800/80 rounded-lg my-3 overflow-x-auto border border-slate-700/50">
+                                                                {children}
+                                                            </pre>
+                                                        ),
+                                                        // Blockquotes
+                                                        blockquote: ({ children }) => (
+                                                            <blockquote className="border-l-4 border-purple-500 pl-4 py-1 my-3 italic text-slate-300 bg-purple-500/10 rounded-r-lg">
+                                                                {children}
+                                                            </blockquote>
+                                                        ),
+                                                        // Links
+                                                        a: ({ href, children }) => (
+                                                            <a href={href} className="text-purple-400 hover:text-purple-300 underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+                                                                {children}
+                                                            </a>
+                                                        ),
+                                                        // Strong and emphasis
+                                                        strong: ({ children }) => (
+                                                            <strong className="font-semibold text-white">{children}</strong>
+                                                        ),
+                                                        em: ({ children }) => (
+                                                            <em className="italic text-slate-300">{children}</em>
+                                                        ),
+                                                        // Horizontal rule
+                                                        hr: () => (
+                                                            <hr className="my-4 border-slate-600/50" />
+                                                        ),
+                                                        // Tables
+                                                        table: ({ children }) => (
+                                                            <div className="overflow-x-auto my-3">
+                                                                <table className="min-w-full border border-slate-600/50 rounded-lg overflow-hidden">{children}</table>
+                                                            </div>
+                                                        ),
+                                                        thead: ({ children }) => (
+                                                            <thead className="bg-slate-700/50">{children}</thead>
+                                                        ),
+                                                        th: ({ children }) => (
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold text-white border-b border-slate-600/50">{children}</th>
+                                                        ),
+                                                        td: ({ children }) => (
+                                                            <td className="px-3 py-2 text-sm text-slate-200 border-b border-slate-600/30">{children}</td>
+                                                        ),
+                                                    }}
+                                                >
+                                                    {message.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        )}
 
                                         {/* TTS Button for assistant messages */}
                                         {message.role === 'assistant' && message.content && (
@@ -164,8 +258,8 @@ export default function ChatInterface({ projectId, projectName }: ChatInterfaceP
                             type="button"
                             onClick={() => setIsVoiceMode(!isVoiceMode)}
                             className={`p-3 rounded-xl transition-all ${isVoiceMode
-                                    ? 'gradient-primary text-white shadow-glow'
-                                    : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
+                                ? 'gradient-primary text-white shadow-glow'
+                                : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
                                 }`}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
