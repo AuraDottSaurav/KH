@@ -17,8 +17,7 @@ const typeIcons: Record<string, React.ReactNode> = {
     pdf: <File className="w-5 h-5" />,
 };
 
-// Generate a mock tag based on ID for visual consistency with screenshot
-const getTag = (id: string) => `#KT-${id.slice(0, 3).toUpperCase()}`;
+
 
 export default function RecentUploads({ items }: RecentUploadsProps) {
     if (items.length === 0) {
@@ -46,7 +45,7 @@ export default function RecentUploads({ items }: RecentUploadsProps) {
 
             <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <AnimatePresence mode="popLayout">
-                    {items.map((item) => (
+                    {items.map((item, index) => (
                         <motion.div
                             key={item.id}
                             layout
@@ -55,40 +54,47 @@ export default function RecentUploads({ items }: RecentUploadsProps) {
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <Card className="bg-zinc-900/40 border-zinc-800/60 p-5 hover:bg-zinc-900/60 transition-colors group">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-indigo-400 group-hover:text-indigo-300 transition-colors">
-                                            {typeIcons[item.type] || <File className="w-5 h-5" />}
+                            <Card className="bg-zinc-900/20 border-zinc-800/40 hover:bg-zinc-900/40 transition-colors group">
+                                <div className="p-4 pb-0 flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-indigo-400/80 group-hover:text-indigo-400 transition-colors shrink-0 group/icon">
+                                            {/* Icon wrapper for hover effect */}
+                                            <div className="group-hover/icon:scale-110 group-hover/icon:rotate-3 transition-transform duration-300">
+                                                {typeIcons[item.type] || <File className="w-4 h-4" />}
+                                            </div>
                                         </div>
-                                        <div>
+                                        <div className="flex flex-col gap-0.5">
                                             <div className="flex items-center gap-2">
-                                                <h4 className="text-sm font-medium text-zinc-200 line-clamp-1 group/title cursor-pointer hover:text-white transition-colors">
+                                                <h4 className="text-sm font-semibold text-zinc-200 line-clamp-1 group/title cursor-pointer hover:text-white transition-colors">
                                                     {item.file_name || `${item.type.charAt(0).toUpperCase() + item.type.slice(1)} Entry`}
                                                 </h4>
-                                                <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-800 rounded">
-                                                    <svg className="w-3 h-3 text-zinc-500 hover:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <button className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-zinc-800 rounded shrink-0 text-zinc-500 hover:text-zinc-300 group/edit">
+                                                    <svg className="w-3 h-3 group-hover/edit:rotate-12 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                     </svg>
                                                 </button>
                                             </div>
+                                            <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <span className="text-[10px] text-zinc-500 font-medium tracking-wide italic">
+                                                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true }).replace('about ', '')}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-3 h-3 text-zinc-600" />
-                                        <span className="text-[10px] text-zinc-500 font-mono tracking-wide">
-                                            {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                                        </span>
-                                    </div>
+                                    <Badge variant="outline" className="bg-zinc-950/50 border-zinc-800 text-[10px] text-zinc-600 font-mono tracking-wider shrink-0 ml-4">
+                                        {`#KT-${String(items.length - index).padStart(2, '0')}`}
+                                    </Badge>
                                 </div>
-                                <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2 pl-[3.5rem]">
-                                    {item.content || "No preview available for this item."}
-                                </p>
+                                <div className="px-4 pb-4 pt-2">
+                                    <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-2 pl-[2.75rem]">
+                                        {item.content || "No preview available for this item."}
+                                    </p>
+                                </div>
                             </Card>
                         </motion.div>
                     ))}
                 </AnimatePresence>
-            </motion.div>
-        </div>
+            </motion.div >
+        </div >
     );
 }

@@ -3,6 +3,8 @@ import { createServerClient } from '@/lib/supabase';
 import { openai } from '@ai-sdk/openai';
 import { embed } from 'ai';
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/ingest - Ingest text, audio, or file content
 export async function POST(request: NextRequest) {
     try {
@@ -156,6 +158,84 @@ export async function GET(request: NextRequest) {
         console.error('Error fetching knowledge items:', error);
         return NextResponse.json(
             { error: 'Failed to fetch knowledge items' },
+            { status: 500 }
+        );
+    }
+}
+// DELETE /api/ingest?id=xxx - Delete a knowledge item
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json(
+                { error: 'Item ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const supabase = createServerClient();
+
+        // 1. Get the item first to check for file_url
+        // Use maybeSingle to avoid error if it's already gone
+        const { data: item, error: fetchError } = await supabase
+            .from('knowledge_items')
+            .select('file_url')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (fetchError) {
+            console.error('Error fetching item for deletion:', fetchError);
+            throw fetchError;
+        }
+
+        // If item doesn't exist, consider it deleted
+        if (!item) {
+            return NextResponse.json({ success: true, message: 'Item already deleted' });
+        }
+
+        // 2. Delete file from storage if it exists/is valid
+        if (item.file_url) {
+            try {
+                const fileUrl = new URL(item.file_url);
+                // Extract path after /knowledge-files/
+                const pathParts = fileUrl.pathname.split('/knowledge-files/');
+                if (pathParts.length > 1) {
+                    const storagePath = decodeURIComponent(pathParts[1]);
+                    const { error: storageError } = await supabase.storage
+                        .from('knowledge-files')
+                        .remove([storagePath]);
+
+                    if (storageError) {
+                        console.warn('Storage deletion warning:', storageError);
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing file URL for deletion:", e);
+                // Continue with DB deletion even if file removal fails
+            }
+        }
+
+        // 3. Delete from database
+        const { error: deleteError, count } = await supabase
+            .from('knowledge_items')
+            .delete({ count: 'exact' })
+            .eq('id', id);
+
+        if (deleteError) throw deleteError;
+
+        // If count is 0, it wasn't deleted (RLS or missing, but we checked missing above)
+        if (count === 0) {
+            console.warn('Delete returned success but 0 rows deleted. Potential RLS issue.');
+            // We still return success to the UI if it's gone, but let's log it.
+        }
+
+        return NextResponse.json({ success: true, deleted: count });
+    } catch (error) {
+        console.error('Error deleting knowledge item:', error);
+        return NextResponse.json(
+            { error: 'Failed to delete item' },
             { status: 500 }
         );
     }

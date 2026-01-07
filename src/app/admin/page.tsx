@@ -8,12 +8,14 @@ import RecentUploads from '@/components/admin/RecentUploads';
 import { Project, KnowledgeItem } from '@/lib/supabase';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [activeProject, setActiveProject] = useState<Project | null>(null);
     const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
     // Fetch projects on mount
     useEffect(() => {
@@ -44,7 +46,7 @@ export default function AdminPage() {
 
     const fetchKnowledgeItems = async (projectId: string) => {
         try {
-            const response = await fetch(`/api/ingest?projectId=${projectId}`);
+            const response = await fetch(`/api/ingest?projectId=${projectId}`, { cache: 'no-store' });
             const data = await response.json();
             setKnowledgeItems(data.items || []);
         } catch (error) {
@@ -66,6 +68,34 @@ export default function AdminPage() {
             }
         } catch (error) {
             console.error('Error creating project:', error);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        // Optimistic update: Remove immediately from UI
+        const previousItems = [...knowledgeItems];
+        setKnowledgeItems(items => items.filter(item => item.id !== id));
+
+        try {
+            const response = await fetch(`/api/ingest?id=${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                // Revert if failed
+                setKnowledgeItems(previousItems);
+                console.error('Failed to delete item server-side');
+                // You might want to add a toast here
+            } else {
+                // Success - fetch authoritative list in background just in case
+                if (activeProject) {
+                    fetchKnowledgeItems(activeProject.id);
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            // Revert if error
+            setKnowledgeItems(previousItems);
         }
     };
 
@@ -109,10 +139,10 @@ export default function AdminPage() {
                                     <ArrowLeft className="w-5 h-5 text-zinc-500" />
                                 </Link>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-white tracking-tight">
+                                    <h1 className="text-2xl font-bold text-white tracking-tight">
                                         {activeProject.name}
                                     </h1>
-                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
                                         {knowledgeItems.length} Knowledge Items Indexed
                                     </p>
                                 </div>

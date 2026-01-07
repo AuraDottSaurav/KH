@@ -22,6 +22,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { toast } = useToast();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // Auto-resize textarea
     useEffect(() => {
@@ -31,9 +32,58 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
         }
     }, [textInput]);
 
-    // Handle text submission
-    const handleTextSubmit = async () => {
-        if (!textInput.trim() || isProcessing) return;
+    // Update handleFileSelect to just set state
+    const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setSelectedFile(file);
+    }, []);
+
+    // Unified submit handler
+    const handleSubmit = async () => {
+        if (isProcessing) return;
+
+        // Handle File Upload
+        if (selectedFile) {
+            setIsProcessing(true);
+            setProcessingMessage(`Processing ${selectedFile.name}...`);
+
+            try {
+                const formData = new FormData();
+                formData.append('projectId', projectId);
+                formData.append('file', selectedFile);
+
+                // Determine type based on file extension
+                const extension = selectedFile.name.split('.').pop()?.toLowerCase();
+                let type = 'text';
+                if (extension === 'pdf') type = 'pdf';
+                else if (['mp3', 'wav', 'webm', 'm4a', 'ogg'].includes(extension || '')) type = 'audio';
+
+                formData.append('type', type);
+
+                const response = await fetch('/api/ingest', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error('Failed to ingest file');
+
+                onKnowledgeAdded();
+                toast({ title: "Success", description: "File uploaded successfully" });
+                setSelectedFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            } catch (error) {
+                console.error('Error processing file:', error);
+                toast({ title: "Error", description: "Failed to upload file", variant: "destructive" });
+            } finally {
+                setIsProcessing(false);
+                setProcessingMessage('');
+            }
+            return;
+        }
+
+        // Handle Text Submission
+        if (!textInput.trim()) return;
 
         setIsProcessing(true);
         setProcessingMessage('Indexing text...');
@@ -63,7 +113,7 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
         }
     };
 
-    // Handle voice recording
+    // Handle voice recording (restored)
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -140,48 +190,6 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
         }
     };
 
-    // Handle file upload
-    const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setIsProcessing(true);
-        setProcessingMessage(`Processing ${file.name}...`);
-
-        try {
-            const formData = new FormData();
-            formData.append('projectId', projectId);
-            formData.append('file', file);
-
-            // Determine type based on file extension
-            const extension = file.name.split('.').pop()?.toLowerCase();
-            let type = 'text';
-            if (extension === 'pdf') type = 'pdf';
-            else if (['mp3', 'wav', 'webm', 'm4a', 'ogg'].includes(extension || '')) type = 'audio';
-
-            formData.append('type', type);
-
-            const response = await fetch('/api/ingest', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error('Failed to ingest file');
-
-            onKnowledgeAdded();
-            toast({ title: "Success", description: "File uploaded successfully" });
-        } catch (error) {
-            console.error('Error processing file:', error);
-            toast({ title: "Error", description: "Failed to upload file", variant: "destructive" });
-        } finally {
-            setIsProcessing(false);
-            setProcessingMessage('');
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        }
-    }, [projectId, onKnowledgeAdded, toast]);
-
     return (
         <div className="w-full max-w-2xl mx-auto">
             {/* Processing Overlay */}
@@ -202,9 +210,9 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
             </AnimatePresence>
 
             {/* Input Capsule */}
-            <div className="relative group">
+            <div className="relative group w-full max-w-2xl mx-auto">
                 <div className="absolute inset-0 bg-indigo-500/5 rounded-3xl blur-xl group-hover:bg-indigo-500/10 transition-colors duration-500" />
-                <div className="relative flex items-end gap-2 p-2 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl transition-all duration-300 focus-within:border-zinc-700/80 focus-within:bg-zinc-900/80">
+                <div className="relative flex items-center gap-2 p-2 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl transition-all duration-300 focus-within:border-zinc-700/80 focus-within:bg-zinc-900/80">
 
                     {/* File Attachment */}
                     <input
@@ -219,57 +227,85 @@ export default function CommandCenter({ projectId, onKnowledgeAdded }: CommandCe
                         size="icon"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isProcessing}
-                        className="h-10 w-10 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0"
+                        className={cn(
+                            "h-10 w-10 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0 group/attach",
+                            selectedFile && "text-indigo-400 bg-indigo-400/10 hover:bg-indigo-400/20"
+                        )}
                     >
-                        <Paperclip className="w-5 h-5" />
+                        <Paperclip className="w-5 h-5 group-hover/attach:rotate-12 transition-transform duration-300" />
                     </Button>
 
-                    {/* Text Area */}
-                    <textarea
-                        ref={textareaRef}
-                        value={textInput}
-                        onChange={(e) => setTextInput(e.target.value)}
-                        placeholder="Capture knowledge..."
-                        className="flex-1 w-full bg-transparent border-0 focus:ring-0 resize-none py-3 px-2 text-zinc-200 placeholder:text-zinc-600 text-sm leading-relaxed max-h-32 scrollbar-none"
-                        rows={1}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleTextSubmit();
-                            }
-                        }}
-                        disabled={isProcessing}
-                    />
+                    {/* Text Area / File Preview */}
+                    <div className="flex-1 min-w-0 flex items-center">
+                        {selectedFile ? (
+                            <div className="py-2.5 px-2 flex items-center justify-between gap-3 text-sm text-zinc-200 w-full">
+                                <div className="flex items-center gap-2 truncate">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+                                    <span className="truncate">{selectedFile.name}</span>
+                                    <span className="text-zinc-500 text-xs shrink-0">({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setSelectedFile(null);
+                                        if (fileInputRef.current) fileInputRef.current.value = '';
+                                    }}
+                                    className="text-zinc-500 hover:text-red-400 transition-colors shrink-0 p-1"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        ) : (
+                            <textarea
+                                ref={textareaRef}
+                                value={textInput}
+                                onChange={(e) => setTextInput(e.target.value)}
+                                placeholder="Type, record, or attach to add knowledge..."
+                                className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none resize-none py-0 px-0 text-zinc-200 placeholder:text-zinc-500 text-sm leading-5 max-h-32 scrollbar-none"
+                                rows={1}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSubmit();
+                                    }
+                                }}
+                                disabled={isProcessing}
+                            />
+                        )}
+                    </div>
 
                     {/* Right Actions */}
-                    <div className="flex items-center gap-1 shrink-0 pb-1">
+                    <div className="flex items-center gap-1 shrink-0">
                         {/* Voice Recording */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onMouseDown={startRecording}
-                            onMouseUp={stopRecording}
-                            onMouseLeave={stopRecording}
-                            onTouchStart={startRecording}
-                            onTouchEnd={stopRecording}
-                            disabled={isProcessing}
-                            className={cn(
-                                "h-9 w-9 rounded-full transition-all",
-                                isRecording ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-                            )}
-                        >
-                            <Mic className="w-4 h-4" />
-                        </Button>
+                        {!selectedFile && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onMouseDown={startRecording}
+                                onMouseUp={stopRecording}
+                                onMouseLeave={stopRecording}
+                                onTouchStart={startRecording}
+                                onTouchEnd={stopRecording}
+                                disabled={isProcessing}
+                                className={cn(
+                                    "h-10 w-10 rounded-full transition-all group/mic",
+                                    isRecording ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                )}
+                            >
+                                <Mic className={cn("w-5 h-5 transition-transform duration-300", isRecording ? "animate-pulse scale-110" : "group-hover/mic:scale-110")} />
+                            </Button>
+                        )}
 
                         {/* Submit */}
-                        {textInput.trim() && (
+                        {(textInput.trim() || selectedFile) && (
                             <Button
                                 size="icon"
-                                onClick={handleTextSubmit}
+                                onClick={handleSubmit}
                                 disabled={isProcessing}
-                                className="h-9 w-9 rounded-full bg-white text-black hover:bg-zinc-200 transition-all animate-in zoom-in duration-200"
+                                className="h-9 w-9 rounded-full bg-white text-black hover:bg-zinc-200 transition-all animate-in zoom-in duration-200 group/send"
                             >
-                                <ArrowUp className="w-5 h-5" />
+                                <ArrowUp className="w-5 h-5 group-hover/send:-translate-y-0.5 group-hover/send:translate-x-0.5 transition-transform duration-300" />
                             </Button>
                         )}
                     </div>

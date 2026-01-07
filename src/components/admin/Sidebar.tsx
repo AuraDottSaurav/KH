@@ -112,8 +112,8 @@ export default function Sidebar({
             <div className="p-4 mt-auto">
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 h-12 rounded-xl text-xs font-semibold tracking-wider transition-all">
-                            <Plus className="w-4 h-4 mr-2" />
+                        <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 h-12 rounded-xl text-xs font-semibold tracking-wider transition-all group">
+                            <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
                             NEW PROJECT
                         </Button>
                     </DialogTrigger>
