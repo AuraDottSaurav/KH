@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Zap } from 'lucide-react';
@@ -68,8 +69,13 @@ export default function ChatSidebar({ projectId, projectName, className, refresh
             {/* Logo/Header */}
             <div className={cn("p-6 flex items-center", isCollapsed ? "justify-center px-0" : "")}>
                 <Link href="/" className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-                        <Zap className="w-5 h-5 fill-current" />
+                    <div className="relative w-8 h-8 shrink-0">
+                        <Image
+                            src="/handover-logo.svg"
+                            alt="Handover Logo"
+                            fill
+                            className="object-contain"
+                        />
                     </div>
                     {!isCollapsed && (
                         <span className="font-bold text-lg tracking-tight text-zinc-100 whitespace-nowrap overflow-hidden transition-all duration-200">
